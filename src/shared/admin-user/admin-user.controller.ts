@@ -1,12 +1,17 @@
-import { PrismaService } from '@/common'
-import { Controller, Get } from '@nestjs/common'
+import { AuthenticatedGuard, DayCacheTTL, PrismaService } from '@/common'
+import { AdminUserEntity } from '@/entity'
+import { Controller, Get, UseGuards } from '@nestjs/common'
 
 @Controller('admin/user')
+@DayCacheTTL()
+@UseGuards(AuthenticatedGuard)
 export class AdminUserController {
 	constructor(private readonly prisma: PrismaService) {}
 
-	@Get()
+	@Get('all')
+	@UseGuards(AuthenticatedGuard)
 	async getAllAdminUser() {
-		return await this.prisma.adminUser.findMany()
+		const users = await this.prisma.adminUser.findMany()
+		return { users: users.map((user) => new AdminUserEntity(user)) }
 	}
 }

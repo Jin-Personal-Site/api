@@ -14,12 +14,13 @@ datasource db {
 }
 
 model AdminUser {
-  id       Int     @id @default(autoincrement())
-  username String  @unique
-  password String
-  name     String?
-  role     Role    @default(EDITOR)
-  posts    Post[]
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  name      String?
+  role      Role     @default(EDITOR)
+  posts     Post[]
+  createdAt DateTime @default(now())
 }
 
 model Post {
@@ -45,6 +46,7 @@ model Post {
 model Category {
   id        Int      @id @default(autoincrement())
   name      String
+  slug      String   @db.VarChar(31)
   posts     Post[]
   color     String?  @db.VarChar(15)
   createdAt DateTime @default(now())

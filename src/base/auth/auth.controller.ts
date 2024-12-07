@@ -9,6 +9,7 @@ import {
 	Req,
 	UseGuards,
 } from '@nestjs/common'
+import { AdminUserEntity } from '@/entity'
 
 export enum AUTH_CACHE_KEY {
 	ME = 'admin/me-',
@@ -36,9 +37,9 @@ export class AuthController {
 		})
 	}
 
-	@UseGuards(AuthenticatedGuard)
 	@Get('me')
+	@UseGuards(AuthenticatedGuard)
 	profile(@User() user: Express.User) {
-		return { user }
+		return new AdminUserEntity(user)
 	}
 }

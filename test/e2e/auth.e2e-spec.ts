@@ -2,10 +2,11 @@ import * as request from 'supertest'
 
 import { INestApplication } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
-import { applyMiddleware, ResponseType } from '@/common'
+import { ResponseType } from '@/common'
 import { AuthModule } from '@/auth'
 import { AppModule } from '@/app.module'
 import 'jest-extended'
+import { middlewares } from '@/app.middleware'
 
 describe('AuthController (e2e)', () => {
 	let app: INestApplication
@@ -19,7 +20,7 @@ describe('AuthController (e2e)', () => {
 		}).compile()
 
 		app = moduleFixture.createNestApplication()
-		applyMiddleware(app)
+		middlewares(app)
 		await app.init()
 	})
 

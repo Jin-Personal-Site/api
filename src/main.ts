@@ -1,12 +1,15 @@
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
-import { applyMiddleware } from './common'
+import { middlewares } from './app.middleware'
 
 async function bootstrap() {
-	const app = await NestFactory.create(AppModule)
+	const app = await NestFactory.create(AppModule, {
+		cors: true,
+		bodyParser: true,
+	})
 
 	app.setGlobalPrefix('api')
-	applyMiddleware(app)
+	middlewares(app)
 
 	await app.listen(process.env.PORT ?? 3000)
 }

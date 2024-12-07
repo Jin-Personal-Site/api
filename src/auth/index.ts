@@ -1,5 +1,5 @@
 export * from './strategies'
-export * from './auth.controller'
+export * from '../base/auth/auth.controller'
 export * from './auth.module'
 export * from './auth.service'
 export * from './hash.service'

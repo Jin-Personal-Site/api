@@ -1,7 +1,7 @@
 export declare global {
 	namespace Express {
 		interface Request {
-			user: Record<any, any>
+			user: User
 			logout: (cb: () => void) => void
 			isAuthenticated: () => boolean
 		}

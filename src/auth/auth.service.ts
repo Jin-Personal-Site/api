@@ -1,6 +1,7 @@
 import { PrismaService } from '@/common'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { HashService } from './hash.service'
+import { AdminUserEntity } from '@/entity'
 
 @Injectable()
 export class AuthService {
@@ -19,9 +20,9 @@ export class AuthService {
 		if (!user) {
 			throw new BadRequestException('Username does not exist')
 		}
-		const { password: hash, ...result } = user
+		const { password: hash } = user
 		if (this.hashService.compare(password, hash)) {
-			return result
+			return new AdminUserEntity(user)
 		}
 		throw new BadRequestException('Password is not matched')
 	}

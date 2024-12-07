@@ -6,11 +6,10 @@ import {
 	CacheStore,
 } from '@nestjs/cache-manager'
 import { Injectable, Logger } from '@nestjs/common'
-
-import { AppConfigService } from './config.service'
+import { AppConfigService } from '@/config'
 
 @Injectable()
-export class RedisConfigService implements CacheOptionsFactory {
+export class RedisStoreFactory implements CacheOptionsFactory {
 	public store: RedisStore
 	constructor(private readonly configService: AppConfigService) {}
 
@@ -25,8 +24,8 @@ export class RedisConfigService implements CacheOptionsFactory {
 		return {
 			isGlobal: true,
 			store: this.store as unknown as CacheStore,
-			ttl: 5 * 60000, // 3 minutes
-			refreshThreshold: 30000, // 30 seconds
+			ttl: 5 * 60000,
+			refreshThreshold: 30000,
 		}
 	}
 }

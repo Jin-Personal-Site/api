@@ -2,7 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { INestApplication } from '@nestjs/common'
 import * as request from 'supertest'
 import { AppModule } from '@/app.module'
-import { applyMiddleware, ResponseType } from '@/common'
+import { ResponseType } from '@/common'
+import { middlewares } from '@/app.middleware'
 
 describe('AppController (e2e)', () => {
 	let app: INestApplication
@@ -14,7 +15,7 @@ describe('AppController (e2e)', () => {
 
 		app = moduleFixture.createNestApplication()
 
-		applyMiddleware(app)
+		middlewares(app)
 		await app.init()
 	})
 

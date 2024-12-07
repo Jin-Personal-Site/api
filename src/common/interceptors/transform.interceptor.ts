@@ -6,20 +6,16 @@ import {
 } from '@nestjs/common'
 import { Observable } from 'rxjs'
 import { map } from 'rxjs/operators'
-
-export interface ResponseType<T = any> {
-	success: boolean
-	data: T
-}
+import { SuccessResponse } from '../types'
 
 @Injectable()
 export class TransformInterceptor<T>
-	implements NestInterceptor<T, ResponseType<T>>
+	implements NestInterceptor<T, SuccessResponse<T>>
 {
 	intercept(
 		context: ExecutionContext,
 		next: CallHandler<T>,
-	): Observable<ResponseType<T>> | Promise<Observable<ResponseType<T>>> {
+	): Observable<SuccessResponse<T>> | Promise<Observable<SuccessResponse<T>>> {
 		return next.handle().pipe(
 			map((data) => ({
 				success: true,

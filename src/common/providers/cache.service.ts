@@ -2,12 +2,16 @@ import { Cache, Milliseconds } from 'cache-manager'
 import { min } from 'lodash'
 
 import { CACHE_MANAGER } from '@nestjs/cache-manager'
-import { Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable, Logger } from '@nestjs/common'
 
 @Injectable()
 export class CacheService {
 	public static NO_LIMIT = 0
-	constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
+	constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {
+		this.cacheManager.reset().then(() => {
+			Logger.log('Reset cache', 'CacheManager')
+		})
+	}
 
 	async get<T = any>(key: string) {
 		return await this.cacheManager.get<T>(key)

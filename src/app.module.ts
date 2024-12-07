@@ -1,18 +1,33 @@
-import { Module, ValidationPipe } from '@nestjs/common'
+import {
+	ClassSerializerInterceptor,
+	Module,
+	ValidationPipe,
+} from '@nestjs/common'
 import { AppController } from './app.controller'
 import {
 	CommonModule,
 	HttpExceptionFilter,
 	TransformInterceptor,
+	ValidationExceptionFilter,
+	ValidationGroupError,
 } from './common'
-import { AdminUserModule } from './shared/admin-user'
+
 import { AuthModule } from './auth'
 import { AppConfigModule } from './config'
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
-import { CacheInterceptor } from '@nestjs/cache-manager'
+import { BaseModule } from './base'
+import { AdminUserModule, CategoryModule, PostModule } from './shared'
 
 @Module({
-	imports: [CommonModule, AppConfigModule, AdminUserModule, AuthModule],
+	imports: [
+		CommonModule,
+		BaseModule,
+		AppConfigModule,
+		AuthModule,
+		AdminUserModule,
+		CategoryModule,
+		PostModule,
+	],
 	controllers: [AppController],
 	providers: [
 		{
@@ -21,15 +36,22 @@ import { CacheInterceptor } from '@nestjs/cache-manager'
 		},
 		{
 			provide: APP_FILTER,
+			useClass: ValidationExceptionFilter,
+		},
+		{
+			provide: APP_FILTER,
 			useClass: HttpExceptionFilter,
 		},
 		{
 			provide: APP_INTERCEPTOR,
-			useClass: CacheInterceptor,
+			useClass: ClassSerializerInterceptor,
 		},
 		{
 			provide: APP_PIPE,
-			useValue: new ValidationPipe({ transform: true }),
+			useValue: new ValidationPipe({
+				transform: true,
+				exceptionFactory: (errors) => new ValidationGroupError(errors),
+			}),
 		},
 	],
 })

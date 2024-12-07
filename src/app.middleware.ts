@@ -12,6 +12,7 @@ function getRedisStore(config: { host: string; port: number }) {
 	// Initialize client.
 	const redisClient = createClient({
 		socket: { host: config.host, port: config.port },
+		database: 1,
 	})
 	redisClient
 		.connect()
@@ -34,7 +35,7 @@ function getRedisStore(config: { host: string; port: number }) {
 	return redisStore
 }
 
-export const applyMiddleware = (app: INestApplication) => {
+export const middlewares = (app: INestApplication) => {
 	const appConfigService = app.get(AppConfigService)
 
 	app.use(compression())
