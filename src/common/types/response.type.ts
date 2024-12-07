@@ -1,4 +1,4 @@
-import { HttpCode, HttpException, HttpStatus } from '@nestjs/common'
+import { HttpException, HttpStatus } from '@nestjs/common'
 import { snakeCase } from 'lodash'
 
 export type ResponseMetaData = {
