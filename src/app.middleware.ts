@@ -49,7 +49,7 @@ export const middlewares = (app: INestApplication) => {
 				maxAge: 3600000,
 				httpOnly: true,
 				sameSite: 'lax',
-				secure: process.env.NODE_ENV === 'production',
+				secure: appConfigService.isProduction(),
 			},
 			rolling: true,
 		}),

@@ -2,11 +2,8 @@ import {
 	ArgumentsHost,
 	Catch,
 	ExceptionFilter,
-	ForbiddenException,
 	HttpException,
 	Logger,
-	NotFoundException,
-	UnauthorizedException,
 } from '@nestjs/common'
 import { Response } from 'express'
 import { ErrorResponse, getErrorCode } from '../types'
@@ -17,11 +14,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 		const response = host.switchToHttp().getResponse<Response>()
 		const statusCode = exception.getStatus()
 
-		if (
-			!(
-				[NotFoundException, ForbiddenException, UnauthorizedException] as const
-			).some((Class) => exception instanceof Class)
-		) {
+		if (!exception.getStatus().toString().startsWith('4')) {
 			Logger.error(exception.message, exception.stack, exception.name)
 		}
 

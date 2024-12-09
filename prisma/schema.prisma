@@ -55,10 +55,11 @@ model Category {
 model Series {
   id          Int      @id @default(autoincrement())
   name        String
+  slug        String   @db.VarChar(31)
   description String   @db.VarChar(127)
   thumbnail   String?  @db.VarChar(255)
   createdAt   DateTime @default(now())
-  Post        Post[]
+  posts       Post[]
 }
 
 enum Role {

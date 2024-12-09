@@ -16,7 +16,12 @@ import { AuthModule } from './auth'
 import { AppConfigModule } from './config'
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
 import { BaseModule } from './base'
-import { AdminUserModule, CategoryModule, PostModule } from './shared'
+import {
+	AdminUserModule,
+	CategoryModule,
+	PostModule,
+	SeriesModule,
+} from './shared'
 
 @Module({
 	imports: [
@@ -27,6 +32,7 @@ import { AdminUserModule, CategoryModule, PostModule } from './shared'
 		AdminUserModule,
 		CategoryModule,
 		PostModule,
+		SeriesModule,
 	],
 	controllers: [AppController],
 	providers: [

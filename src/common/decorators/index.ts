@@ -1,2 +1,2 @@
-export * from './cache-ttl.decorator'
+export * from './cache.decorator'
 export * from './user.decorator'

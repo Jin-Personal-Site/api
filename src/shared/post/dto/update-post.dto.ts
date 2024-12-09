@@ -1,29 +1,36 @@
 import { Prisma } from '@prisma/client'
 import { Type } from 'class-transformer'
 import {
-	IsBoolean,
+	IsString,
 	IsNotEmpty,
 	IsOptional,
+	IsBoolean,
 	IsPositive,
-	IsString,
 } from 'class-validator'
 
-export class CreatePostDTO implements Partial<Prisma.PostUncheckedCreateInput> {
+export class UpdatePostDTO implements Prisma.PostUncheckedUpdateInput {
 	@IsString()
 	@IsNotEmpty()
-	title: string
+	@IsOptional()
+	title?: string
 
 	@IsOptional()
 	@IsString()
-	description?: string = ''
+	@IsOptional()
+	description?: string | null
 
 	@IsString()
 	@IsNotEmpty()
-	content: string
+	@IsOptional()
+	content?: string | null
 
-	@Type(() => Boolean)
 	@IsBoolean()
-	published: boolean
+	@IsOptional()
+	approved?: boolean
+
+	@IsBoolean()
+	@IsOptional()
+	published?: boolean
 
 	thumbnail?: string
 	coverImage?: string

@@ -1,12 +1,29 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common'
-import { CreateCategoryDTO } from './dto'
+import {
+	BadRequestException,
+	Body,
+	Controller,
+	Delete,
+	Get,
+	Patch,
+	Post,
+	Query,
+	UseGuards,
+} from '@nestjs/common'
+import { CreateCategoryDTO, UpdateCategoryDTO } from './dto'
 import { CategoryService } from './category.service'
 import { CategoryEntity } from '@/entity'
-import { AuthenticatedGuard } from '@/common'
+import { AuthenticatedGuard, ParsePositivePipe } from '@/common'
 
 @Controller('admin/category')
 export class CategoryController {
 	constructor(private readonly categoryService: CategoryService) {}
+
+	@Post('create')
+	@UseGuards(AuthenticatedGuard)
+	async create(@Body() body: CreateCategoryDTO) {
+		const category = await this.categoryService.createCategory(body)
+		return { category: new CategoryEntity(category) }
+	}
 
 	@Get('all')
 	@UseGuards(AuthenticatedGuard)
@@ -17,10 +34,30 @@ export class CategoryController {
 		}
 	}
 
-	@Post('create')
+	@Delete('delete')
 	@UseGuards(AuthenticatedGuard)
-	async create(@Body() body: CreateCategoryDTO) {
-		const category = await this.categoryService.createCategory(body)
-		return { category: new CategoryEntity(category) }
+	async delete(@Query('id', ParsePositivePipe) categoryId: number) {
+		const deletedCategory =
+			await this.categoryService.deleteCategory(categoryId)
+		if (!deletedCategory) {
+			throw new BadRequestException('Not found category with this ID')
+		}
+		return { deletedCategory: new CategoryEntity(deletedCategory) }
+	}
+
+	@Patch('update')
+	@UseGuards(AuthenticatedGuard)
+	async update(
+		@Query('id', ParsePositivePipe) categoryId: number,
+		@Body() body: UpdateCategoryDTO,
+	) {
+		const updatedCategory = await this.categoryService.updateCategory(
+			categoryId,
+			body,
+		)
+		if (!updatedCategory) {
+			throw new BadRequestException('Not found category with this ID')
+		}
+		return { updatedCategory: new CategoryEntity(updatedCategory) }
 	}
 }

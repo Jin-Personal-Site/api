@@ -3,6 +3,7 @@ import { Request } from 'express'
 import { AuthenticatedGuard, CacheService, LocalGuard, User } from '@/common'
 import {
 	BadRequestException,
+	Body,
 	Controller,
 	Get,
 	Post,
@@ -10,10 +11,7 @@ import {
 	UseGuards,
 } from '@nestjs/common'
 import { AdminUserEntity } from '@/entity'
-
-export enum AUTH_CACHE_KEY {
-	ME = 'admin/me-',
-}
+import { LoginDTO } from './dto'
 
 @Controller('admin')
 export class AuthController {
@@ -21,8 +19,7 @@ export class AuthController {
 
 	@Post('login')
 	@UseGuards(LocalGuard)
-	login(@User() user: Express.User) {
-		this.cacheService.del(AUTH_CACHE_KEY.ME + user.id)
+	login(@User() user: Express.User, @Body() _body: LoginDTO) {
 		return { message: 'Logged in successfully', user }
 	}
 
@@ -31,7 +28,6 @@ export class AuthController {
 		if (!req.user?.id) {
 			throw new BadRequestException()
 		}
-		this.cacheService.del(AUTH_CACHE_KEY.ME + req.user.id)
 		req.logout(() => {
 			return { message: 'Logged out successfully' }
 		})
