@@ -1,7 +1,8 @@
 import { HttpException, HttpStatus } from '@nestjs/common'
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger'
 import { snakeCase } from 'lodash'
 
-export type ResponseMetaData = {
+export class ResponseMetaData {
 	requestId?: string
 	timestamp?: string
 	pagination?: {
@@ -27,19 +28,49 @@ export type ResponseMetaData = {
 	}
 }
 
-export type SuccessResponse<T = any> = {
+export class SuccessResponse<T = any> {
+	@ApiProperty()
 	success: true
+
+	@ApiProperty()
 	data: T
+
+	// TODO: Remove ApiHideProperty after its logic prepared
+	@ApiHideProperty()
 	meta?: ResponseMetaData
 }
 
-export type ErrorResponse<T = any> = {
+export class ValidationErrorDetail {
+	@ApiProperty()
+	property: string
+
+	@ApiProperty({ example: 0 })
+	value: any
+
+	@ApiProperty()
+	reason: string[]
+}
+
+export class ErrorDetail<T = any> {
+	@ApiProperty()
+	code: string
+
+	@ApiProperty()
+	message: string
+
+	@ApiProperty({ required: false })
+	details?: T
+}
+
+export class ErrorResponse<T = any> {
+	@ApiProperty({ example: false })
 	success: false
-	error: {
-		code: string
-		message: string
-		details?: T
-	}
+
+	@ApiProperty({ type: () => ErrorDetail })
+	error: ErrorDetail<T>
+
+	// TODO: Remove ApiHideProperty after its logic prepared
+	@ApiHideProperty()
 	meta?: ResponseMetaData
 }
 

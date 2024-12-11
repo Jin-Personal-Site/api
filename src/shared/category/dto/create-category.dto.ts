@@ -6,7 +6,7 @@ export class CreateCategoryDTO implements Prisma.CategoryCreateInput {
 	name: string
 
 	@IsString()
-	@Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+	@Matches(/^[a-z0-9]+(?:-[a-z0-9]+){0,30}$/, {
 		message:
 			'Slug must be lowercase and can only contain letters, numbers, and hyphens.',
 	})

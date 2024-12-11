@@ -6,13 +6,7 @@ import {
 } from '@nestjs/common'
 import { ValidationError } from 'class-validator'
 import { Response } from 'express'
-import { ErrorResponse, getErrorCode } from '../types'
-
-export type ValidationErrorDetail = {
-	property: string
-	value: any
-	reason: string[]
-}
+import { ErrorResponse, getErrorCode, ValidationErrorDetail } from '../types'
 
 export class ValidationGroupError implements Error {
 	name: string
