@@ -17,6 +17,8 @@ async function bootstrap() {
 		enableSwagger(app)
 	}
 
-	await app.listen(process.env.PORT ?? 3000)
+	await app.listen(
+		configService.configService.get('server.port', { infer: true }),
+	)
 }
 bootstrap()

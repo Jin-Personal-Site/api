@@ -2,11 +2,11 @@ import * as request from 'supertest'
 
 import { INestApplication } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
-import { ResponseType } from '@/common'
 import { AuthModule } from '@/auth'
 import { AppModule } from '@/app.module'
 import 'jest-extended'
 import { middlewares } from '@/app.middleware'
+import { SuccessResponse } from '@/common'
 
 describe('AuthController (e2e)', () => {
 	let app: INestApplication
@@ -24,9 +24,9 @@ describe('AuthController (e2e)', () => {
 		await app.init()
 	})
 
-	it('POST /admin/login', async () => {
+	it('POST /api/admin/login', async () => {
 		const res = await request(app.getHttpServer())
-			.post('/admin/login')
+			.post('/api/admin/login')
 			.send({ username, password })
 			.expect(201)
 			.expect('Content-Type', /json/)
@@ -35,7 +35,7 @@ describe('AuthController (e2e)', () => {
 		sessionCookie = res.headers['set-cookie'][0]
 
 		expect(res.body).toMatchObject<
-			ResponseType<{ user: Partial<Express.User> }>
+			SuccessResponse<{ user: Partial<Express.User> }>
 		>(
 			expect.objectContaining({
 				success: true,
@@ -50,9 +50,9 @@ describe('AuthController (e2e)', () => {
 		)
 	})
 
-	it('GET /admin/me', async () => {
+	it('GET /api/admin/me', async () => {
 		await request(app.getHttpServer())
-			.get('/admin/me')
+			.get('/api/admin/me')
 			.set('Cookie', sessionCookie)
 			.expect(200)
 			.expect((res) => {
@@ -71,9 +71,9 @@ describe('AuthController (e2e)', () => {
 			})
 	})
 
-	it('POST /admin/logout', async () => {
+	it('POST /api/admin/logout', async () => {
 		await request(app.getHttpServer())
-			.post('/admin/logout')
+			.post('/api/admin/logout')
 			.set('Cookie', sessionCookie)
 			.expect(201)
 			.expect((res) => {

@@ -21,14 +21,15 @@ export class S3Service extends BaseStorage implements IStorage, OnModuleInit {
 	constructor(private readonly configService: AppConfigService) {
 		super()
 
+		const { region, accessKey, secretKey } = this.configService.getAwsConfig()
 		this.s3Client = new S3Client({
-			region: process.env.AWS_REGION,
+			region,
 			credentials: {
-				accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-				secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+				accessKeyId: accessKey,
+				secretAccessKey: secretKey,
 			},
 		})
-		this.bucketName = process.env.AWS_PUBLIC_BUCKET_NAME
+		this.bucketName = this.configService.getStorageBucketName()
 	}
 
 	onModuleInit() {

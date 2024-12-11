@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common'
 import { AuthController } from './auth'
-import { Environment } from '@/config'
-import { MinioService, S3Service } from './storage/providers'
+import { AppConfigService } from '@/config'
+import { BaseStorage, MinioService, S3Service } from './storage/providers'
 import { StorageController } from './storage'
 import { CacheModule } from '@nestjs/cache-manager'
 import { RedisStoreFactory } from './cache'
@@ -18,10 +18,12 @@ import { RedisStoreFactory } from './cache'
 	providers: [
 		{
 			provide: 'STORAGE',
-			useClass:
-				process.env.NODE_ENV === Environment.Production
-					? S3Service
-					: MinioService,
+			inject: [AppConfigService],
+			useFactory(configService: AppConfigService): BaseStorage {
+				return configService.isProduction()
+					? new S3Service(configService)
+					: new MinioService(configService)
+			},
 		},
 	],
 	exports: ['STORAGE'],

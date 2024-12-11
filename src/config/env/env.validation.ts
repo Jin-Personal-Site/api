@@ -1,5 +1,6 @@
-import { plainToInstance } from 'class-transformer'
+import { plainToInstance, Type } from 'class-transformer'
 import {
+	IsBoolean,
 	IsEnum,
 	IsNumber,
 	IsOptional,
@@ -20,6 +21,7 @@ export class EnvironmentVariables {
 	@IsOptional()
 	NODE_ENV?: Environment = Environment.Development
 
+	@Type(() => Number)
 	@IsNumber()
 	@Min(0)
 	@Max(65535)
@@ -39,13 +41,53 @@ export class EnvironmentVariables {
 	@IsString()
 	DATABASE_URL: string
 
+	@Type(() => Boolean)
+	@IsBoolean()
+	CACHE_ENABLE: boolean
+
 	@IsString()
 	REDIS_HOST: string
 
+	@Type(() => Number)
 	@IsNumber()
 	@Min(0)
 	@Max(65535)
 	REDIS_PORT: number
+
+	@IsString()
+	MINIO_HOST: string
+
+	@Type(() => Number)
+	@IsNumber()
+	@Min(0)
+	@Max(65535)
+	MINIO_PORT: number
+
+	@IsString()
+	MINIO_ACCESS_KEY: string
+
+	@IsString()
+	MINIO_SECRET_KEY: string
+
+	@IsString()
+	AWS_REGION: string
+
+	@IsString()
+	AWS_ACCESS_KEY_ID: string
+
+	@IsString()
+	AWS_SECRET_ACCESS_KEY: string
+
+	@IsString()
+	BUCKET_NAME: string
+
+	@Type(() => Boolean)
+	@IsBoolean()
+	ESLINT_USE_FLAT_CONFIG: boolean
+
+	@Type(() => Boolean)
+	@IsBoolean()
+	FORCE_COLOR: boolean
 }
 
 export function validateEnv(config: Record<string, unknown>) {

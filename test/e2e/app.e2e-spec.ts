@@ -2,8 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { INestApplication } from '@nestjs/common'
 import * as request from 'supertest'
 import { AppModule } from '@/app.module'
-import { ResponseType } from '@/common'
 import { middlewares } from '@/app.middleware'
+import { SuccessResponse } from '@/common'
 
 describe('AppController (e2e)', () => {
 	let app: INestApplication
@@ -19,13 +19,13 @@ describe('AppController (e2e)', () => {
 		await app.init()
 	})
 
-	it('GET /', async () => {
+	it('GET /api', async () => {
 		return await request(app.getHttpServer())
-			.get('/')
+			.get('/api')
 			.expect(200)
 			.expect('Content-Type', /json/)
 			.expect((res) => {
-				expect(res.body).toEqual<ResponseType>(
+				expect(res.body).toEqual<SuccessResponse>(
 					expect.objectContaining({
 						success: true,
 					}),

@@ -19,15 +19,17 @@ export class MinioService
 
 	constructor(private readonly configService: AppConfigService) {
 		super()
+		const { host, port, accessKey, secretKey } =
+			this.configService.getMinioConfig()
 
 		this.minioClient = new Minio.Client({
-			endPoint: process.env.MINIO_HOST,
-			port: +process.env.MINIO_PORT,
+			endPoint: host,
+			port,
 			useSSL: false,
-			accessKey: process.env.MINIO_ACCESS_KEY,
-			secretKey: process.env.MINIO_SECRET_KEY,
+			accessKey,
+			secretKey,
 		})
-		this.bucketName = process.env.AWS_PUBLIC_BUCKET_NAME
+		this.bucketName = this.configService.getStorageBucketName()
 	}
 
 	onModuleInit() {

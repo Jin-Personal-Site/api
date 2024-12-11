@@ -9,7 +9,6 @@ import {
 	User,
 } from '@/common'
 import {
-	BadRequestException,
 	Body,
 	Controller,
 	Get,
