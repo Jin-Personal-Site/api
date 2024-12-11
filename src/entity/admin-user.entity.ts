@@ -1,6 +1,7 @@
 import { AdminUser, Role } from '@prisma/client'
 import { Exclude } from 'class-transformer'
 import { BaseEntity } from './base.entity'
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger'
 
 export class AdminUserEntity
 	extends BaseEntity<AdminUser>
@@ -11,10 +12,10 @@ export class AdminUserEntity
 	username: string
 
 	@Exclude()
+	@ApiHideProperty()
 	password: string
 
-	@Exclude()
+	@ApiProperty({ enum: Role })
 	role: Role
-
 	createdAt: Date
 }

@@ -1,2 +1,6 @@
+export * from './all-series-output.dto'
+export * from './create-series-result.dto'
 export * from './create-series.dto'
+export * from './delete-series-result.dto'
+export * from './update-series-result.dto'
 export * from './update-series.dto'

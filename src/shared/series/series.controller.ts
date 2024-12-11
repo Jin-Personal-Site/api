@@ -4,48 +4,88 @@ import {
 	Controller,
 	Delete,
 	Get,
+	Inject,
 	Patch,
 	Post,
 	Query,
+	UploadedFiles,
 	UseGuards,
+	UseInterceptors,
 } from '@nestjs/common'
-import { SeriesEntity } from '@/entity'
-import { AuthenticatedGuard, ParsePositivePipe } from '@/common'
+import {
+	ApiErrorResponse,
+	ApiSuccessResponse,
+	AuthenticatedGuard,
+	ParsePositivePipe,
+	ValidationErrorDetail,
+} from '@/common'
 import { SeriesService } from './series.service'
-import { CreateSeriesDTO, UpdateSeriesDTO } from './dto'
+import {
+	AllSeriesOutputDTO,
+	CreateSeriesDTO,
+	CreateSeriesResultDTO,
+	DeleteSeriesResultDTO,
+	UpdateSeriesDTO,
+	UpdateSeriesResultDTO,
+} from './dto'
+import { FileFieldsInterceptor } from '@nestjs/platform-express'
+import { IStorage } from '@/base'
 
 @Controller('admin/series')
 export class SeriesController {
-	constructor(private readonly seriesService: SeriesService) {}
+	constructor(
+		@Inject('STORAGE') private readonly storageService: IStorage,
+		private readonly seriesService: SeriesService,
+	) {}
 
 	@Post('create')
 	@UseGuards(AuthenticatedGuard)
-	async create(@Body() body: CreateSeriesDTO) {
+	@UseInterceptors(FileFieldsInterceptor([{ name: 'thumbnail', maxCount: 1 }]))
+	@ApiSuccessResponse(201, CreateSeriesResultDTO)
+	@ApiErrorResponse(400, ValidationErrorDetail, true)
+	@ApiErrorResponse(403)
+	async create(
+		@Body() body: CreateSeriesDTO,
+		@UploadedFiles() files: { thumbnail: Express.Multer.File[] },
+	) {
+		const thumbnailResult =
+			files.thumbnail?.[0] &&
+			(await this.storageService.putObject({
+				file: files.thumbnail[0],
+				prefix: 'images/thumbnails/',
+			}))
+
+		body.thumbnail = thumbnailResult?.objectKey
+
 		const series = await this.seriesService.createSeries(body)
-		return { series: new SeriesEntity(series) }
+		return new CreateSeriesResultDTO({ series })
 	}
 
 	@Get('all')
 	@UseGuards(AuthenticatedGuard)
+	@ApiSuccessResponse(200, AllSeriesOutputDTO)
+	@ApiErrorResponse(403)
 	async getAll() {
 		const series = await this.seriesService.getAllSeries()
-		return {
-			series: series.map((item) => new SeriesEntity(item)),
-		}
+		return new AllSeriesOutputDTO({ series })
 	}
 
 	@Delete('delete')
 	@UseGuards(AuthenticatedGuard)
+	@ApiSuccessResponse(201, AllSeriesOutputDTO)
+	@ApiErrorResponse(403)
 	async delete(@Query('id', ParsePositivePipe) seriesId: number) {
 		const deletedSeries = await this.seriesService.deleteSeries(seriesId)
 		if (!deletedSeries) {
 			throw new BadRequestException('Not found category with this ID')
 		}
-		return { deletedSeries: new SeriesEntity(deletedSeries) }
+		return new DeleteSeriesResultDTO({ deletedSeries })
 	}
 
 	@Patch('update')
 	@UseGuards(AuthenticatedGuard)
+	@ApiSuccessResponse(201, UpdateSeriesResultDTO)
+	@ApiErrorResponse(403)
 	async update(
 		@Query('id', ParsePositivePipe) seriesId: number,
 		@Body() body: UpdateSeriesDTO,
@@ -54,6 +94,6 @@ export class SeriesController {
 		if (!updatedSeries) {
 			throw new BadRequestException('Not found category with this ID')
 		}
-		return { updatedSeries: new SeriesEntity(updatedSeries) }
+		return new UpdateSeriesResultDTO({ updatedSeries })
 	}
 }

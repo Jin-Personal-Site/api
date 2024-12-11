@@ -1,2 +1,6 @@
+export * from './all-categories-output.dto'
+export * from './create-category-result.dto'
 export * from './create-category.dto'
+export * from './delete-category-result.dto'
 export * from './update-category.dto'
+export * from './update-category-result.dto'

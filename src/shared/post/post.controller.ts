@@ -13,11 +13,24 @@ import {
 	UseInterceptors,
 } from '@nestjs/common'
 import { PostService } from './post.service'
-import { CreatePostDTO, UpdatePostDTO } from './dto'
+import {
+	AllPostOutputDTO,
+	CreatePostDTO,
+	CreatePostResultDTO,
+	DeletePostResultDTO,
+	UpdatePostDTO,
+	UpdatePostResultDTO,
+} from './dto'
 import { FileFieldsInterceptor } from '@nestjs/platform-express'
 import { IStorage } from '@/base'
-import { PostEntity } from '@/entity'
-import { AuthenticatedGuard, ParsePositivePipe, User } from '@/common'
+import {
+	ApiErrorResponse,
+	ApiSuccessResponse,
+	AuthenticatedGuard,
+	ParsePositivePipe,
+	User,
+	ValidationErrorDetail,
+} from '@/common'
 
 @Controller('admin/post')
 export class PostController {
@@ -34,6 +47,9 @@ export class PostController {
 			{ name: 'coverImage', maxCount: 1 },
 		]),
 	)
+	@ApiSuccessResponse(201, CreatePostResultDTO)
+	@ApiErrorResponse(400, ValidationErrorDetail, true)
+	@ApiErrorResponse(401)
 	async create(
 		@User() user: Express.User,
 		@Body() body: CreatePostDTO,
@@ -63,14 +79,15 @@ export class PostController {
 		body.coverImage = coverResult?.objectKey
 
 		const post = await this.postService.createPost(user, body)
-		return new PostEntity(post)
+		return new CreatePostResultDTO({ post })
 	}
 
 	@Get('all')
 	@UseGuards(AuthenticatedGuard)
+	@ApiSuccessResponse(200, AllPostOutputDTO)
 	async getAll() {
 		const posts = await this.postService.getAllPost()
-		return { posts: posts.map((post) => new PostEntity(post)) }
+		return new AllPostOutputDTO({ posts })
 	}
 
 	@Delete('delete')
@@ -81,19 +98,23 @@ export class PostController {
 			{ name: 'coverImage', maxCount: 1 },
 		]),
 	)
+	@ApiSuccessResponse(200, DeletePostResultDTO)
+	@ApiErrorResponse(400)
 	async delete(
 		@User() user: Express.User,
 		@Query('id', ParsePositivePipe) postId: number,
 	) {
-		const post = await this.postService.deletePost(user, postId)
-		if (!post) {
+		const deletedPost = await this.postService.deletePost(user, postId)
+		if (!deletedPost) {
 			throw new BadRequestException('Not found post of this ID')
 		}
-		return new PostEntity(post)
+		return new DeletePostResultDTO({ deletedPost })
 	}
 
 	@Patch('update')
 	@UseGuards(AuthenticatedGuard)
+	@ApiSuccessResponse(200, UpdatePostResultDTO)
+	@ApiErrorResponse(400)
 	async update(
 		@User() user: Express.User,
 		@UploadedFiles()
@@ -127,6 +148,6 @@ export class PostController {
 		if (!updatedPost) {
 			throw new BadRequestException('Not found category with this ID')
 		}
-		return { updatedCategory: new PostEntity(updatedPost) }
+		return new UpdatePostResultDTO({ updatedPost })
 	}
 }
