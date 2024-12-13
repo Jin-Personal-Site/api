@@ -31,6 +31,7 @@ import {
 	User,
 	ValidationErrorDetail,
 } from '@/common'
+import { plainToInstance } from 'class-transformer'
 
 @Controller('admin/post')
 export class PostController {
@@ -79,7 +80,7 @@ export class PostController {
 		body.coverImage = coverResult?.objectKey
 
 		const post = await this.postService.createPost(user, body)
-		return new CreatePostResultDTO({ post })
+		return plainToInstance(CreatePostResultDTO, { post })
 	}
 
 	@Get('all')
@@ -87,7 +88,7 @@ export class PostController {
 	@ApiSuccessResponse(200, AllPostOutputDTO)
 	async getAll() {
 		const posts = await this.postService.getAllPost()
-		return new AllPostOutputDTO({ posts })
+		return plainToInstance(AllPostOutputDTO, { posts })
 	}
 
 	@Delete('delete')
@@ -108,7 +109,7 @@ export class PostController {
 		if (!deletedPost) {
 			throw new BadRequestException('Not found post of this ID')
 		}
-		return new DeletePostResultDTO({ deletedPost })
+		return plainToInstance(DeletePostResultDTO, { deletedPost })
 	}
 
 	@Patch('update')
@@ -148,6 +149,6 @@ export class PostController {
 		if (!updatedPost) {
 			throw new BadRequestException('Not found category with this ID')
 		}
-		return new UpdatePostResultDTO({ updatedPost })
+		return plainToInstance(UpdatePostResultDTO, { updatedPost })
 	}
 }

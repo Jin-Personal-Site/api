@@ -1,15 +1,7 @@
-import { BaseEntity, SeriesEntity } from '@/entity'
-import { Series } from '@prisma/client'
-import { Transform } from 'class-transformer'
+import { SeriesEntity } from '@/entity'
+import { Type } from 'class-transformer'
 
-type UpdateSeriesResult = {
-	updatedSeries: SeriesEntity
-}
-
-export class UpdateSeriesResultDTO
-	extends BaseEntity<UpdateSeriesResult>
-	implements UpdateSeriesResult
-{
-	@Transform(({ value }) => new SeriesEntity(value as Series))
+export class UpdateSeriesResultDTO {
+	@Type(() => SeriesEntity)
 	updatedSeries: SeriesEntity
 }

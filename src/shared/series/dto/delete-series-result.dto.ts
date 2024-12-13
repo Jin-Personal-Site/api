@@ -1,15 +1,7 @@
-import { BaseEntity, SeriesEntity } from '@/entity'
-import { Series } from '@prisma/client'
-import { Transform } from 'class-transformer'
+import { SeriesEntity } from '@/entity'
+import { Type } from 'class-transformer'
 
-type DeleteSeriesResult = {
-	deletedSeries: SeriesEntity
-}
-
-export class DeleteSeriesResultDTO
-	extends BaseEntity<DeleteSeriesResult>
-	implements DeleteSeriesResult
-{
-	@Transform(({ value }) => new SeriesEntity(value as Series))
+export class DeleteSeriesResultDTO {
+	@Type(() => SeriesEntity)
 	deletedSeries: SeriesEntity
 }

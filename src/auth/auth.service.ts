@@ -4,6 +4,7 @@ import { HashService } from './hash.service'
 import { AdminUserEntity } from '@/entity'
 import { getCacheKey } from '@/base'
 import { AdminUser } from '@prisma/client'
+import { plainToInstance } from 'class-transformer'
 
 @Injectable()
 export class AuthService {
@@ -31,7 +32,7 @@ export class AuthService {
 		}
 		const { password: hash } = user
 		if (this.hashService.compare(password, hash)) {
-			return new AdminUserEntity(user)
+			return plainToInstance(AdminUserEntity, user)
 		}
 		throw new BadRequestException('Password is not matched')
 	}

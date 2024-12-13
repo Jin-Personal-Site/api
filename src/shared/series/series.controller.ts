@@ -30,6 +30,7 @@ import {
 } from './dto'
 import { FileFieldsInterceptor } from '@nestjs/platform-express'
 import { IStorage } from '@/base'
+import { plainToInstance } from 'class-transformer'
 
 @Controller('admin/series')
 export class SeriesController {
@@ -58,7 +59,7 @@ export class SeriesController {
 		body.thumbnail = thumbnailResult?.objectKey
 
 		const series = await this.seriesService.createSeries(body)
-		return new CreateSeriesResultDTO({ series })
+		return plainToInstance(CreateSeriesResultDTO, { series })
 	}
 
 	@Get('all')
@@ -67,7 +68,7 @@ export class SeriesController {
 	@ApiErrorResponse(403)
 	async getAll() {
 		const series = await this.seriesService.getAllSeries()
-		return new AllSeriesOutputDTO({ series })
+		return plainToInstance(AllSeriesOutputDTO, { series })
 	}
 
 	@Delete('delete')
@@ -79,7 +80,7 @@ export class SeriesController {
 		if (!deletedSeries) {
 			throw new BadRequestException('Not found category with this ID')
 		}
-		return new DeleteSeriesResultDTO({ deletedSeries })
+		return plainToInstance(DeleteSeriesResultDTO, { deletedSeries })
 	}
 
 	@Patch('update')
@@ -89,11 +90,11 @@ export class SeriesController {
 	async update(
 		@Query('id', ParsePositivePipe) seriesId: number,
 		@Body() body: UpdateSeriesDTO,
-	) {
+	): Promise<UpdateSeriesResultDTO> {
 		const updatedSeries = await this.seriesService.updateSeries(seriesId, body)
 		if (!updatedSeries) {
 			throw new BadRequestException('Not found category with this ID')
 		}
-		return new UpdateSeriesResultDTO({ updatedSeries })
+		return plainToInstance(UpdateSeriesResultDTO, { updatedSeries })
 	}
 }

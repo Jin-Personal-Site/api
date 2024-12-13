@@ -25,6 +25,7 @@ import {
 	ParsePositivePipe,
 	ValidationErrorDetail,
 } from '@/common'
+import { plainToInstance } from 'class-transformer'
 
 @Controller('admin/category')
 export class CategoryController {
@@ -37,7 +38,7 @@ export class CategoryController {
 	@ApiErrorResponse(403)
 	async create(@Body() body: CreateCategoryDTO) {
 		const category = await this.categoryService.createCategory(body)
-		return new CreateCategoryResultDTO({ category })
+		return plainToInstance(CreateCategoryResultDTO, { category })
 	}
 
 	@Get('all')
@@ -46,7 +47,7 @@ export class CategoryController {
 	@ApiErrorResponse(403)
 	async getAll() {
 		const categories = await this.categoryService.getAllCategories()
-		return new AllCategoriesOutputDTO({ categories })
+		return plainToInstance(AllCategoriesOutputDTO, { categories })
 	}
 
 	@Delete('delete')
@@ -60,7 +61,7 @@ export class CategoryController {
 		if (!deletedCategory) {
 			throw new BadRequestException('Not found category with this ID')
 		}
-		return new DeleteCategoryResultDTO({ deletedCategory })
+		return plainToInstance(DeleteCategoryResultDTO, { deletedCategory })
 	}
 
 	@Patch('update')
@@ -79,6 +80,6 @@ export class CategoryController {
 		if (!updatedCategory) {
 			throw new BadRequestException('Not found category with this ID')
 		}
-		return new UpdateCategoryResultDTO({ updatedCategory })
+		return plainToInstance(UpdateCategoryResultDTO, { updatedCategory })
 	}
 }

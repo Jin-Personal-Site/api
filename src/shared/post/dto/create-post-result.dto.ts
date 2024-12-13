@@ -1,15 +1,7 @@
-import { BaseEntity, PostEntity } from '@/entity'
-import { Post } from '@prisma/client'
-import { Transform } from 'class-transformer'
+import { PostEntity } from '@/entity'
+import { Type } from 'class-transformer'
 
-type CreatePostResult = {
-	post: Post
-}
-
-export class CreatePostResultDTO
-	extends BaseEntity<CreatePostResult>
-	implements CreatePostResult
-{
-	@Transform(({ value }) => new PostEntity(value as Post))
+export class CreatePostResultDTO {
+	@Type(() => PostEntity)
 	post: PostEntity
 }

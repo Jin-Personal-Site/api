@@ -1,15 +1,7 @@
-import { BaseEntity, PostEntity } from '@/entity'
-import { Post } from '@prisma/client'
-import { Transform } from 'class-transformer'
+import { PostEntity } from '@/entity'
+import { Type } from 'class-transformer'
 
-type DeletePostResult = {
-	deletedPost: Post
-}
-
-export class DeletePostResultDTO
-	extends BaseEntity<DeletePostResult>
-	implements DeletePostResult
-{
-	@Transform(({ value }) => new PostEntity(value as Post))
+export class DeletePostResultDTO {
+	@Type(() => PostEntity)
 	deletedPost: PostEntity
 }

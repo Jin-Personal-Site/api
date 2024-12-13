@@ -17,8 +17,8 @@ import {
 	UnauthorizedException,
 	UseGuards,
 } from '@nestjs/common'
-import { AdminUserEntity } from '@/entity'
-import { LoginDTO, LoginResultDTO, LogoutResultDTO } from './dto'
+import { LoginDTO, LoginResultDTO, LogoutResultDTO, MeOutputDTO } from './dto'
+import { plainToInstance } from 'class-transformer'
 
 @Controller('admin')
 export class AuthController {
@@ -29,7 +29,10 @@ export class AuthController {
 	@ApiSuccessResponse(201, LoginResultDTO)
 	@ApiErrorResponse(401)
 	login(@User() user: Express.User, @Body() _body: LoginDTO) {
-		return new LoginResultDTO({ message: 'Logged in successfully', user })
+		return plainToInstance(LoginResultDTO, {
+			message: 'Logged in successfully',
+			user,
+		})
 	}
 
 	@Post('logout')
@@ -46,8 +49,9 @@ export class AuthController {
 
 	@Get('me')
 	@UseGuards(AuthenticatedGuard)
-	@ApiSuccessResponse(200, AdminUserEntity)
+	@ApiSuccessResponse(200, MeOutputDTO)
+	@ApiErrorResponse(403)
 	profile(@User() user: Express.User) {
-		return new AdminUserEntity(user)
+		return plainToInstance(MeOutputDTO, { user })
 	}
 }

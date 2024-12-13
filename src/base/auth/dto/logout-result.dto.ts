@@ -1,12 +1,3 @@
-import { BaseEntity } from '@/entity'
-
-type LoginResult = {
-	message: string
-}
-
-export class LogoutResultDTO
-	extends BaseEntity<LoginResult>
-	implements LoginResult
-{
+export class LogoutResultDTO {
 	message: string
 }

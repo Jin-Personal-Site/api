@@ -1,10 +1,12 @@
 import { Category } from '@prisma/client'
-import { BaseEntity } from './base.entity'
+import { Type } from 'class-transformer'
 
-export class CategoryEntity extends BaseEntity<Category> implements Category {
+export class CategoryEntity implements Category {
 	id: number
 	name: string
 	slug: string
 	color: string
+
+	@Type(() => Date)
 	createdAt: Date
 }

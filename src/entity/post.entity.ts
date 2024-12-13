@@ -1,12 +1,11 @@
-import { AdminUser, Category, Post } from '@prisma/client'
-import { BaseEntity } from './base.entity'
-import { Exclude, Transform } from 'class-transformer'
+import { Post } from '@prisma/client'
+import { Exclude, Type } from 'class-transformer'
 import { AdminUserEntity } from './admin-user.entity'
 import { CategoryEntity } from './category.entity'
 import { ApiHideProperty } from '@nestjs/swagger'
 import { SeriesEntity } from './series.entity'
 
-export class PostEntity extends BaseEntity<Post> implements Post {
+export class PostEntity implements Post {
 	id: number
 	title: string
 	description: string
@@ -36,17 +35,18 @@ export class PostEntity extends BaseEntity<Post> implements Post {
 
 	@Exclude()
 	@ApiHideProperty()
+	@Type(() => Date)
 	createdAt: Date
 
 	updatedAt: Date
 	publishedAt: Date
 
-	@Transform(({ value }) => new AdminUserEntity(value))
+	@Type(() => AdminUserEntity)
 	author: AdminUserEntity
 
-	@Transform(({ value }) => (value ? new CategoryEntity(value) : null))
+	@Type(() => CategoryEntity)
 	category?: CategoryEntity
 
-	@Transform(({ value }) => (value ? new SeriesEntity(value) : null))
+	@Type(() => SeriesEntity)
 	series?: SeriesEntity
 }
