@@ -7,6 +7,8 @@ import { createClient } from 'redis'
 
 import { AppConfigService } from '@/config'
 import { INestApplication, Logger } from '@nestjs/common'
+import { v4 as uuidv4 } from 'uuid'
+import { NextFunction, Request, Response } from 'express'
 
 function getRedisStore(config: { host: string; port: number }) {
 	// Initialize client.
@@ -35,9 +37,22 @@ function getRedisStore(config: { host: string; port: number }) {
 	return redisStore
 }
 
+const generateRequestIDMiddleware = (
+	req: Request,
+	res: Response,
+	next: NextFunction,
+) => {
+	const requestId = uuidv4()
+	req.id = requestId
+	req.requestTime = new Date()
+	res.setHeader('X-Request-Id', requestId)
+	next()
+}
+
 export const middlewares = (app: INestApplication) => {
 	const appConfigService = app.get(AppConfigService)
 
+	app.use(generateRequestIDMiddleware)
 	app.use(compression())
 	app.use(
 		session({

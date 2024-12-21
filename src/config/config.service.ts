@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
+import { ConfigService, Path, PathValue } from '@nestjs/config'
 import { EnvConfigType, Environment } from './env'
 
 @Injectable()
@@ -8,10 +8,25 @@ export class AppConfigService {
 		public readonly configService: ConfigService<EnvConfigType, true>,
 	) {}
 
+	get<T extends Path<EnvConfigType>>(
+		propertyPath: T,
+	): PathValue<EnvConfigType, T> {
+		return this.configService.get(propertyPath, {
+			infer: true,
+		})
+	}
+
 	isProduction(): boolean {
 		return (
 			this.configService.get('server.nodeEnv', { infer: true }) ===
 			Environment.Production
+		)
+	}
+
+	isTesting(): boolean {
+		return (
+			this.configService.get('server.nodeEnv', { infer: true }) ===
+			Environment.Testing
 		)
 	}
 

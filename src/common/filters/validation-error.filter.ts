@@ -5,8 +5,9 @@ import {
 	HttpStatus,
 } from '@nestjs/common'
 import { ValidationError } from 'class-validator'
-import { Response } from 'express'
+import { Request, Response } from 'express'
 import { ErrorResponse, getErrorCode, ValidationErrorDetail } from '../types'
+import { getHttpMetadata } from '../helpers'
 
 export class ValidationGroupError implements Error {
 	name: string
@@ -23,7 +24,7 @@ export class ValidationGroupError implements Error {
 }
 
 @Catch(ValidationGroupError, ValidationError)
-export class ValidationExceptionFilter implements ExceptionFilter {
+export class ValidationErrorFilter implements ExceptionFilter {
 	catch(
 		exception: ValidationGroupError | ValidationError,
 		host: ArgumentsHost,
@@ -31,6 +32,7 @@ export class ValidationExceptionFilter implements ExceptionFilter {
 		const errors: ValidationError[] =
 			exception instanceof ValidationError ? [exception] : exception.errors
 
+		const request = host.switchToHttp().getRequest<Request>()
 		const response = host.switchToHttp().getResponse<Response>()
 		const statusCode = HttpStatus.BAD_REQUEST
 
@@ -47,6 +49,7 @@ export class ValidationExceptionFilter implements ExceptionFilter {
 					),
 				})),
 			},
+			meta: getHttpMetadata(request),
 		} as ErrorResponse<ValidationErrorDetail[]>)
 	}
 }

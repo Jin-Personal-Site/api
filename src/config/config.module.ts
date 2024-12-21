@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { envConfig, validateEnv } from './env'
 import { AppConfigService } from './config.service'
+import { MyLoggerService } from './logger'
 
 @Global()
 @Module({
@@ -13,7 +14,7 @@ import { AppConfigService } from './config.service'
 			validate: validateEnv,
 		}),
 	],
-	providers: [AppConfigService],
-	exports: [AppConfigService],
+	providers: [AppConfigService, MyLoggerService],
+	exports: [AppConfigService, MyLoggerService],
 })
 export class AppConfigModule {}

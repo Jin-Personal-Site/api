@@ -7,8 +7,9 @@ import { AppController } from './app.controller'
 import {
 	CommonModule,
 	HttpExceptionFilter,
+	PrismaClientErrorFilter,
 	TransformInterceptor,
-	ValidationExceptionFilter,
+	ValidationErrorFilter,
 	ValidationGroupError,
 } from './common'
 
@@ -25,9 +26,9 @@ import {
 
 @Module({
 	imports: [
+		AppConfigModule,
 		CommonModule,
 		BaseModule,
-		AppConfigModule,
 		AuthModule,
 		AdminUserModule,
 		CategoryModule,
@@ -42,7 +43,11 @@ import {
 		},
 		{
 			provide: APP_FILTER,
-			useClass: ValidationExceptionFilter,
+			useClass: PrismaClientErrorFilter,
+		},
+		{
+			provide: APP_FILTER,
+			useClass: ValidationErrorFilter,
 		},
 		{
 			provide: APP_FILTER,

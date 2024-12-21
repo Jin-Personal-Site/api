@@ -1,3 +1,4 @@
+import { LogLevel } from '@nestjs/common'
 import { plainToInstance, Type } from 'class-transformer'
 import {
 	IsBoolean,
@@ -81,6 +82,9 @@ export class EnvironmentVariables {
 
 	@IsString()
 	BUCKET_NAME: string
+
+	@IsString()
+	LOG_LEVEL: LogLevel = 'log'
 
 	@Type(() => Boolean)
 	@IsBoolean()

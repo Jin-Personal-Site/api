@@ -5,12 +5,14 @@ import {
 	HttpException,
 	Logger,
 } from '@nestjs/common'
-import { Response } from 'express'
+import { Request, Response } from 'express'
 import { ErrorResponse, getErrorCode } from '../types'
+import { getHttpMetadata } from '../helpers'
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
 	catch(exception: HttpException, host: ArgumentsHost) {
+		const request = host.switchToHttp().getRequest<Request>()
 		const response = host.switchToHttp().getResponse<Response>()
 		const statusCode = exception.getStatus()
 
@@ -24,6 +26,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 				code: getErrorCode(statusCode),
 				message: exception.message,
 			},
+			meta: getHttpMetadata(request),
 		} as ErrorResponse)
 	}
 }

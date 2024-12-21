@@ -1,4 +1,5 @@
 import { Environment } from '@/config'
+import { LogLevel } from '@nestjs/common'
 
 export declare global {
 	namespace NodeJS {
@@ -24,6 +25,8 @@ export declare global {
 			AWS_SECRET_ACCESS_KEY: string
 
 			BUCKET_NAME: string
+
+			LOG_LEVEL: LogLevel
 
 			ESLINT_USE_FLAT_CONFIG: boolean
 			FORCE_COLOR: boolean

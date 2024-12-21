@@ -35,8 +35,7 @@ export class SuccessResponse<T = any> {
 	@ApiProperty()
 	data: T
 
-	// TODO: Remove ApiHideProperty after its logic prepared
-	@ApiHideProperty()
+	@ApiProperty()
 	meta?: ResponseMetaData
 }
 

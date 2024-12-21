@@ -17,7 +17,7 @@ export class CacheService {
 	async get<T = any>(key: string) {
 		const cache = await this.cacheManager.get<T>(key)
 		if (cache) {
-			this.logger.verbose(`Cache USED: "${key}"`)
+			this.logger.debug(`Cache USED: "${key}"`)
 		}
 		return cache
 	}
@@ -25,7 +25,7 @@ export class CacheService {
 	async mget<T = any>(keys: string[]): Promise<T[]> {
 		const caches = (await this.cacheManager.store.mget(...keys)) as T[]
 		if (caches.some((v) => v)) {
-			this.logger.verbose('Caches USED')
+			this.logger.debug('Caches USED')
 			console.log(
 				keys.reduce((cur, key, index) => {
 					cur[key] = caches[index]
@@ -46,7 +46,7 @@ export class CacheService {
 
 		await this.cacheManager.set(key, value, min(ttl))
 
-		this.logger.verbose(`Cache SET: "${key}"`)
+		this.logger.debug(`Cache SET: "${key}"`)
 	}
 
 	async mset(
@@ -58,24 +58,24 @@ export class CacheService {
 
 		await this.cacheManager.store.mset(keyValuePairs, min(ttl))
 
-		this.logger.verbose(
+		this.logger.debug(
 			`Caches SET: ${JSON.stringify(keyValuePairs.map(([key]) => key).filter((v) => v))}`,
 		)
 	}
 
 	async del(key: string) {
 		await this.cacheManager.del(key)
-		this.logger.verbose(`Cache DELETED: "${key}"`)
+		this.logger.debug(`Cache DELETED: "${key}"`)
 	}
 
 	async mdel(keys: string[]) {
 		await this.cacheManager.store.mdel(...keys)
-		this.logger.verbose(`Caches DELETED: ${JSON.stringify(keys)}`)
+		this.logger.debug(`Caches DELETED: ${JSON.stringify(keys)}`)
 	}
 
 	async reset() {
 		await this.cacheManager.reset()
-		this.logger.verbose(`Cache RESET`)
+		this.logger.debug(`Cache RESET`)
 	}
 
 	async ttl(key: string) {

@@ -28,6 +28,7 @@ export const envConfig = () =>
 		storage: {
 			bucket: process.env.BUCKET_NAME,
 		},
+		logLevel: process.env.LOG_LEVEL,
 	}) as const
 
 export type EnvConfigType = ReturnType<typeof envConfig>
