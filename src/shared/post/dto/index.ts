@@ -1,4 +1,5 @@
 export * from './all-post-output.dto'
+export * from './all-post.dto'
 export * from './create-post-result.dto'
 export * from './create-post.dto'
 export * from './delete-post-result.dto'

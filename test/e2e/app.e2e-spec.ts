@@ -19,9 +19,9 @@ describe('AppController (e2e)', () => {
 		await app.init()
 	})
 
-	it('GET /api', async () => {
+	it('GET /', async () => {
 		return await request(app.getHttpServer())
-			.get('/api')
+			.get('/')
 			.expect(200)
 			.expect('Content-Type', /json/)
 			.expect((res) => {

@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common'
-import * as sharp from 'sharp'
 import { v4 as uuidv4 } from 'uuid'
 
 export type GetObjectParam = {
@@ -30,39 +29,40 @@ export abstract class BaseStorage {
 		return `${uuidv4()}.${fileExtension}`
 	}
 
-	async convertImageTo(
-		format: 'avif' | 'webp',
-		file: Express.Multer.File,
-	): Promise<{
-		buffer: Buffer | null
-		size: number
-		contentType: string
-		extension: string
-	}> {
-		if (file.mimetype.includes(format)) {
-			console.log(
-				`Ignored converting to ${format.toUpperCase()} because it has already been`,
-			)
-			return null
-		}
-		if (!file.mimetype.includes('image')) {
-			console.log(
-				`Ignored converting to ${format.toUpperCase()} because it is not an image`,
-			)
-			return null
-		}
+	// TODO: Install sharp to use this function
+	// async convertImageTo(
+	// 	format: 'avif' | 'webp',
+	// 	file: Express.Multer.File,
+	// ): Promise<{
+	// 	buffer: Buffer | null
+	// 	size: number
+	// 	contentType: string
+	// 	extension: string
+	// }> {
+	// 	if (file.mimetype.includes(format)) {
+	// 		console.log(
+	// 			`Ignored converting to ${format.toUpperCase()} because it has already been`,
+	// 		)
+	// 		return null
+	// 	}
+	// 	if (!file.mimetype.includes('image')) {
+	// 		console.log(
+	// 			`Ignored converting to ${format.toUpperCase()} because it is not an image`,
+	// 		)
+	// 		return null
+	// 	}
 
-		const buffer = await sharp(file.buffer)
-			[format]({
-				lossless: true,
-			})
-			.toBuffer()
+	// 	const buffer = await sharp(file.buffer)
+	// 		[format]({
+	// 			lossless: true,
+	// 		})
+	// 		.toBuffer()
 
-		return {
-			buffer,
-			size: buffer ? Buffer.byteLength(buffer) : Infinity,
-			contentType: `image/${format.toLowerCase()}`,
-			extension: format.toLowerCase(),
-		}
-	}
+	// 	return {
+	// 		buffer,
+	// 		size: buffer ? Buffer.byteLength(buffer) : Infinity,
+	// 		contentType: `image/${format.toLowerCase()}`,
+	// 		extension: format.toLowerCase(),
+	// 	}
+	// }
 }

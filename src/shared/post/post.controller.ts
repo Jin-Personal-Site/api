@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common'
 import { PostService } from './post.service'
 import {
+	AllPostDTO,
 	AllPostOutputDTO,
 	CreatePostDTO,
 	CreatePostResultDTO,
@@ -67,12 +68,12 @@ export class PostController {
 			thumbnail?.[0] &&
 				this.storageService.putObject({
 					file: thumbnail[0],
-					prefix: 'images/thumbnails/',
+					prefix: 'images/post/thumbnails/',
 				}),
 			coverImage?.[0] &&
 				this.storageService.putObject({
 					file: coverImage[0],
-					prefix: 'images/covers/',
+					prefix: 'images/post/covers/',
 				}),
 		])
 
@@ -86,19 +87,13 @@ export class PostController {
 	@Get('all')
 	@UseGuards(AuthenticatedGuard)
 	@ApiSuccessResponse(200, AllPostOutputDTO)
-	async getAll() {
-		const posts = await this.postService.getAllPost()
-		return plainToInstance(AllPostOutputDTO, { posts })
+	async getAll(@Query() query: AllPostDTO) {
+		const postData = await this.postService.getAllPost(query)
+		return plainToInstance(AllPostOutputDTO, postData)
 	}
 
 	@Delete('delete')
 	@UseGuards(AuthenticatedGuard)
-	@UseInterceptors(
-		FileFieldsInterceptor([
-			{ name: 'thumbnail', maxCount: 1 },
-			{ name: 'coverImage', maxCount: 1 },
-		]),
-	)
 	@ApiSuccessResponse(200, DeletePostResultDTO)
 	@ApiErrorResponse(400)
 	async delete(

@@ -1,5 +1,6 @@
 import { Environment } from '@/config'
 import { LogLevel } from '@nestjs/common'
+import { AdminUserEntity } from '@/entity'
 
 export declare global {
 	namespace NodeJS {
@@ -31,5 +32,15 @@ export declare global {
 			ESLINT_USE_FLAT_CONFIG: boolean
 			FORCE_COLOR: boolean
 		}
+	}
+	namespace Express {
+		interface Request {
+			id: string
+			requestTime: Date
+			user: User
+			logout: (cb: () => void) => void
+			isAuthenticated: () => boolean
+		}
+		type User = AdminUserEntity
 	}
 }
