@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client'
-import { IsNotEmpty, IsString } from 'class-validator'
+import { IsNotEmpty, IsString, Matches } from 'class-validator'
 
 export class CreateSeriesDTO implements Prisma.SeriesUncheckedCreateInput {
 	@IsString()
@@ -8,6 +8,9 @@ export class CreateSeriesDTO implements Prisma.SeriesUncheckedCreateInput {
 
 	@IsString()
 	@IsNotEmpty()
+	@Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+		message: 'Slug must be lowercase, alphanumeric, and can contain hyphens.',
+	})
 	slug: string
 
 	@IsString()

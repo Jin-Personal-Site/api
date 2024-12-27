@@ -72,9 +72,7 @@ export class PostService {
 			},
 		})
 
-		if (createdPost?.published) {
-			this.cacheService.delByPrefix('post')
-		}
+		this.cacheService.delByPrefix('post')
 
 		return createdPost
 	}
@@ -106,19 +104,47 @@ export class PostService {
 		return { posts, pagination }
 	}
 
+	async getPostById(postId: number): Promise<Post> {
+		const post = await this.cacheService.getSet(
+			getCacheKey.post.detail(postId),
+			() =>
+				this.prisma.post.findUnique({
+					where: {
+						id: postId,
+					},
+					include: {
+						author: true,
+						category: true,
+						series: true,
+					},
+				}),
+		)
+		if (!post) {
+			throw new BadRequestException('Post not found')
+		}
+
+		return post
+	}
+
 	async deletePost(user: AdminUserEntity, id: number) {
 		const post = await this.prisma.post.findFirst({ where: { id } })
 		if (!post) {
 			throw new BadRequestException('Post not found')
 		}
 		if (user.role === Role.EDITOR && post.authorId !== user.id) {
-			return await this.prisma.post.delete({
-				where: {
-					id,
-				},
-			})
+			throw new BadRequestException('Only post owner or admin')
 		}
-		throw new BadRequestException('Only post owner or admin')
+		const deletedPost = await this.prisma.post.delete({
+			where: {
+				id,
+			},
+			include: {
+				author: true,
+			},
+		})
+		await this.cacheService.delByPrefix('post')
+
+		return deletedPost
 	}
 
 	async updatePost(
@@ -131,26 +157,28 @@ export class PostService {
 			throw new BadRequestException('Post not found')
 		}
 		if (user.role === Role.EDITOR && post.authorId !== user.id) {
-			return await this.prisma.post.create({
-				data: {
-					title: data.title,
-					description: data.description,
-					content: data.content,
-					thumbnail: data.thumbnail,
-					coverImage: data.coverImage,
-					approved: data.approved,
-					published: data.published,
-					publishedAt: !post.published && data.published ? new Date() : null,
-					categoryId: data.categoryId,
-					seriesId: data.seriesId,
-				} as Prisma.PostUncheckedCreateInput,
-				include: {
-					author: true,
-					category: true,
-					series: true,
-				},
-			})
+			throw new BadRequestException('Only post owner or admin')
 		}
-		throw new BadRequestException('Only post owner or admin')
+
+		const updatedPost = await this.prisma.post.update({
+			where: { id: postId },
+			data: {
+				...data,
+				publishedAt:
+					!post.published && data.published ? new Date() : post.publishedAt,
+			},
+			include: {
+				author: true,
+				category: true,
+				series: true,
+			},
+		})
+
+		if (!updatedPost) {
+			throw new BadRequestException('Not found post with this ID')
+		}
+		await this.cacheService.delByPrefix('post')
+
+		return updatedPost
 	}
 }

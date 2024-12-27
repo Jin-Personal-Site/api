@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client'
-import { Type } from 'class-transformer'
+import { Transform, Type } from 'class-transformer'
 import {
 	IsString,
 	IsNotEmpty,
@@ -8,7 +8,7 @@ import {
 	IsPositive,
 } from 'class-validator'
 
-export class UpdatePostDTO implements Prisma.PostUncheckedUpdateInput {
+export class UpdatePostDTO implements Partial<Prisma.PostUncheckedUpdateInput> {
 	@IsString()
 	@IsNotEmpty()
 	@IsOptional()
@@ -24,10 +24,12 @@ export class UpdatePostDTO implements Prisma.PostUncheckedUpdateInput {
 	@IsOptional()
 	content?: string | null
 
+	@Transform(({ value }) => !!JSON.parse(value))
 	@IsBoolean()
 	@IsOptional()
 	approved?: boolean
 
+	@Transform(({ value }) => !!JSON.parse(value))
 	@IsBoolean()
 	@IsOptional()
 	published?: boolean

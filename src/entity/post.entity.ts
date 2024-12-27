@@ -10,13 +10,7 @@ export class PostEntity implements Post {
 	title: string
 	description: string
 	content: string
-
-	@Exclude()
-	@ApiHideProperty()
 	approved: boolean
-
-	@Exclude()
-	@ApiHideProperty()
 	published: boolean
 
 	@Exclude()

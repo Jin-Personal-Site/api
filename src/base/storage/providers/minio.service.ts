@@ -3,6 +3,8 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import * as Minio from 'minio'
 import {
 	BaseStorage,
+	DeleteObjectParam,
+	DeleteObjectsParam,
 	GetObjectParam,
 	IStorage,
 	PutObjectParam,
@@ -77,5 +79,21 @@ export class MinioService
 		return {
 			objectKey: fileKey,
 		}
+	}
+
+	async deleteObject(options: DeleteObjectParam) {
+		const { key, bucketName } = options
+		await this.minioClient.removeObject(bucketName || this.bucketName, key)
+	}
+
+	async deleteObjects(options: DeleteObjectsParam) {
+		const { keys, bucketName } = options
+		const filteredKeys = keys.filter((key) => key)
+		if (!filteredKeys.length) return
+
+		await this.minioClient.removeObjects(
+			bucketName || this.bucketName,
+			filteredKeys,
+		)
 	}
 }

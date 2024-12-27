@@ -5,9 +5,9 @@ import {
 	Delete,
 	Get,
 	Inject,
+	Param,
 	Patch,
 	Post,
-	Query,
 	UploadedFiles,
 	UseGuards,
 	UseInterceptors,
@@ -71,11 +71,11 @@ export class SeriesController {
 		return plainToInstance(AllSeriesOutputDTO, { series })
 	}
 
-	@Delete('delete')
+	@Delete(':id/delete')
 	@UseGuards(AuthenticatedGuard)
 	@ApiSuccessResponse(201, AllSeriesOutputDTO)
 	@ApiErrorResponse(403)
-	async delete(@Query('id', ParsePositivePipe) seriesId: number) {
+	async delete(@Param('id', ParsePositivePipe) seriesId: number) {
 		const deletedSeries = await this.seriesService.deleteSeries(seriesId)
 		if (!deletedSeries) {
 			throw new BadRequestException('Not found category with this ID')
@@ -83,18 +83,26 @@ export class SeriesController {
 		return plainToInstance(DeleteSeriesResultDTO, { deletedSeries })
 	}
 
-	@Patch('update')
+	@Patch(':id/update')
 	@UseGuards(AuthenticatedGuard)
+	@UseInterceptors(FileFieldsInterceptor([{ name: 'thumbnail', maxCount: 1 }]))
 	@ApiSuccessResponse(201, UpdateSeriesResultDTO)
 	@ApiErrorResponse(403)
 	async update(
-		@Query('id', ParsePositivePipe) seriesId: number,
+		@Param('id', ParsePositivePipe) seriesId: number,
 		@Body() body: UpdateSeriesDTO,
+		@UploadedFiles() files: { thumbnail: Express.Multer.File[] },
 	): Promise<UpdateSeriesResultDTO> {
+		const thumbnailResult =
+			files.thumbnail?.[0] &&
+			(await this.storageService.putObject({
+				file: files.thumbnail[0],
+				prefix: 'images/thumbnails/',
+			}))
+
+		body.thumbnail = thumbnailResult?.objectKey
+
 		const updatedSeries = await this.seriesService.updateSeries(seriesId, body)
-		if (!updatedSeries) {
-			throw new BadRequestException('Not found category with this ID')
-		}
 		return plainToInstance(UpdateSeriesResultDTO, { updatedSeries })
 	}
 }

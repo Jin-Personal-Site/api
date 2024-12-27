@@ -15,6 +15,9 @@ import {
 	AllPostOutputDTO,
 	CreatePostDTO,
 	CreatePostResultDTO,
+	DeletePostResultDTO,
+	UpdatePostDTO,
+	UpdatePostResultDTO,
 } from '@/shared'
 import { INestApplication } from '@nestjs/common'
 import { Test, TestingModule } from '@nestjs/testing'
@@ -69,7 +72,7 @@ describe('PostController (e2e)', () => {
 					)
 					const createData: CreatePostDTO = {
 						title: faker.lorem.sentence({ min: 8, max: 12 }),
-						description: faker.lorem.sentences({ min: 2, max: 3 }),
+						description: faker.lorem.sentences({ min: 1, max: 2 }),
 						content: faker.lorem.paragraphs({ min: 2, max: 5 }),
 						published: true,
 						categoryId: 1,
@@ -312,7 +315,6 @@ describe('PostController (e2e)', () => {
 						title: expect.any(String),
 						description: expect.any(String),
 						content: expect.any(String),
-						publishedAt: expect.any(String),
 						author: expect.objectContaining({
 							id: expect.any(Number),
 							name: expect.any(String),
@@ -365,7 +367,7 @@ describe('PostController (e2e)', () => {
 
 			const payload: CreatePostDTO = {
 				title: faker.lorem.sentence({ min: 8, max: 12 }),
-				description: faker.lorem.sentences({ min: 2, max: 5 }),
+				description: faker.lorem.sentences({ min: 1, max: 2 }),
 				content: faker.lorem.paragraphs({ min: 2, max: 5 }),
 				published: true,
 				categoryId: 1,
@@ -440,6 +442,728 @@ describe('PostController (e2e)', () => {
 					}),
 				}),
 			)
+		})
+	})
+
+	describe('GET /admin/post/:id', () => {
+		it('unauthenticated', async () => {
+			return await request(app.getHttpServer())
+				.get('/admin/post/1')
+				.expect(403)
+				.expect('Content-Type', /json/)
+				.expect((res) => {
+					expect(res.body).toEqual(
+						expect.objectContaining<ErrorResponse>({
+							success: false,
+							error: expect.any(Object),
+						}),
+					)
+				})
+		})
+
+		describe('authenticated', () => {
+			let sessionCookie: string
+
+			beforeEach(async () => {
+				sessionCookie = await getLoginSession(
+					app.getHttpServer(),
+					username,
+					password,
+				)
+			})
+
+			it('get existing post', async () => {
+				// First create a post
+				const createData: CreatePostDTO = {
+					title: faker.lorem.sentence({ min: 8, max: 12 }),
+					description: faker.lorem.sentences({ min: 1, max: 2 }),
+					content: faker.lorem.paragraphs({ min: 2, max: 5 }),
+					published: true,
+					categoryId: 1,
+					seriesId: 1,
+				}
+
+				const imageMock = {
+					fieldname: 'thumbnail',
+					originalname: 'thumbnail.jpg',
+					buffer: Buffer.from(faker.lorem.words()),
+					mimetype: 'image/jpeg',
+				} as Express.Multer.File
+
+				const {
+					body: createBody,
+				}: { body: SuccessResponse<CreatePostResultDTO> } = await request(
+					app.getHttpServer(),
+				)
+					.post('/admin/post/create')
+					.set('Cookie', sessionCookie)
+					.field({
+						...createData,
+					})
+					.attach('thumbnail', imageMock.buffer, {
+						filename: imageMock.originalname,
+						contentType: imageMock.mimetype,
+					})
+					.expect(201)
+
+				// Then get the created post
+				const { body } = await request(app.getHttpServer())
+					.get(`/admin/post/${createBody.data.post.id}`)
+					.set('Cookie', sessionCookie)
+					.expect(200)
+					.expect('Content-Type', /json/)
+
+				expect(body).toEqual(
+					expect.objectContaining<SuccessResponse>({
+						success: true,
+						data: expect.objectContaining({
+							post: expect.objectContaining({
+								id: createBody.data.post.id,
+								title: createData.title,
+								description: createData.description,
+								content: createData.content,
+								thumbnail: expect.any(String),
+								coverImage: expect.toBeNil(),
+								updatedAt: expect.any(String),
+								publishedAt: expect.any(String),
+								author: expect.objectContaining({
+									id: expect.any(Number),
+									name: expect.any(String),
+									username,
+								}),
+								category: expect.objectContaining({
+									id: createData.categoryId,
+									name: expect.any(String),
+									slug: expect.any(String),
+								}),
+								series: expect.objectContaining({
+									id: createData.seriesId,
+									name: expect.any(String),
+									slug: expect.any(String),
+									description: expect.any(String),
+								}),
+							}),
+						}),
+					}),
+				)
+			})
+
+			it('get non-existent post', async () => {
+				return await request(app.getHttpServer())
+					.get('/admin/post/99999')
+					.set('Cookie', sessionCookie)
+					.expect(400)
+					.expect('Content-Type', /json/)
+					.expect((res) => {
+						expect(res.body).toEqual(
+							expect.objectContaining<ErrorResponse>({
+								success: false,
+								error: expect.objectContaining<Partial<ErrorDetail>>({
+									code: getErrorCode(400),
+									message: expect.any(String),
+								}),
+							}),
+						)
+					})
+			})
+
+			it('invalid post id format', async () => {
+				return await request(app.getHttpServer())
+					.get('/admin/post/invalid-id')
+					.set('Cookie', sessionCookie)
+					.expect(400)
+					.expect('Content-Type', /json/)
+					.expect((res) => {
+						expect(res.body).toEqual(
+							expect.objectContaining<ErrorResponse>({
+								success: false,
+								error: expect.objectContaining<Partial<ErrorDetail>>({
+									code: getErrorCode(400),
+									message: expect.any(String),
+								}),
+							}),
+						)
+					})
+			})
+		})
+	})
+
+	describe('DELETE /admin/post/:id/delete', () => {
+		let sessionCookie: string
+
+		beforeEach(async () => {
+			sessionCookie = await getLoginSession(
+				app.getHttpServer(),
+				username,
+				password,
+			)
+		})
+
+		describe('happy cases', () => {
+			it('admin can delete any post', async () => {
+				// First create a post
+				const createData: CreatePostDTO = {
+					title: faker.lorem.sentence({ min: 8, max: 12 }),
+					description: faker.lorem.sentences({ min: 1, max: 2 }),
+					content: faker.lorem.paragraphs({ min: 2, max: 5 }),
+					published: true,
+					categoryId: 1,
+					seriesId: 1,
+				}
+
+				const {
+					body: createBody,
+				}: { body: SuccessResponse<CreatePostResultDTO> } = await request(
+					app.getHttpServer(),
+				)
+					.post('/admin/post/create')
+					.set('Cookie', sessionCookie)
+					.field({
+						...createData,
+					})
+					.expect(201)
+
+				// Then delete the created post
+				const { body } = await request(app.getHttpServer())
+					.delete(`/admin/post/${createBody.data.post.id}/delete`)
+					.set('Cookie', sessionCookie)
+					.expect(200)
+					.expect('Content-Type', /json/)
+
+				expect(body).toEqual(
+					expect.objectContaining<SuccessResponse<DeletePostResultDTO>>({
+						success: true,
+						data: {
+							deletedPost: expect.objectContaining({
+								id: createBody.data.post.id,
+								title: createData.title,
+								description: createData.description,
+								content: createData.content,
+							}),
+						},
+					}),
+				)
+
+				// Verify post is deleted by trying to fetch it
+				await request(app.getHttpServer())
+					.get(`/admin/post/${createBody.data.post.id}`)
+					.set('Cookie', sessionCookie)
+					.expect(400)
+			})
+
+			it('editor can delete their own post', async () => {
+				// Login as editor
+				const editorCookie = await getLoginSession(
+					app.getHttpServer(),
+					'editor',
+					'editor',
+				)
+
+				// First create a post as editor
+				const createData: CreatePostDTO = {
+					title: faker.lorem.sentence({ min: 8, max: 12 }),
+					description: faker.lorem.sentences({ min: 1, max: 2 }),
+					content: faker.lorem.paragraphs({ min: 2, max: 5 }),
+					published: true,
+					categoryId: 1,
+					seriesId: 1,
+				}
+
+				const {
+					body: createBody,
+				}: { body: SuccessResponse<CreatePostResultDTO> } = await request(
+					app.getHttpServer(),
+				)
+					.post('/admin/post/create')
+					.set('Cookie', editorCookie)
+					.field({
+						...createData,
+					})
+					.expect(201)
+
+				// Then delete the created post
+				const { body } = await request(app.getHttpServer())
+					.delete(`/admin/post/${createBody.data.post.id}/delete`)
+					.set('Cookie', editorCookie)
+					.expect(200)
+					.expect('Content-Type', /json/)
+
+				expect(body).toEqual(
+					expect.objectContaining<SuccessResponse<DeletePostResultDTO>>({
+						success: true,
+						data: {
+							deletedPost: expect.objectContaining({
+								id: createBody.data.post.id,
+								title: createData.title,
+								description: createData.description,
+								content: createData.content,
+								author: expect.objectContaining({
+									username: 'editor',
+								}),
+							}),
+						},
+					}),
+				)
+
+				// Verify post is deleted by trying to fetch it
+				await request(app.getHttpServer())
+					.get(`/admin/post/${createBody.data.post.id}`)
+					.set('Cookie', editorCookie)
+					.expect(400)
+			})
+		})
+
+		describe('bad cases', () => {
+			it('unauthenticated request', async () => {
+				return await request(app.getHttpServer())
+					.delete('/admin/post/1/delete')
+					.expect(403)
+					.expect('Content-Type', /json/)
+					.expect((res) => {
+						expect(res.body).toEqual(
+							expect.objectContaining<ErrorResponse>({
+								success: false,
+								error: expect.any(Object),
+							}),
+						)
+					})
+			})
+
+			it('non-existent post ID', async () => {
+				return await request(app.getHttpServer())
+					.delete('/admin/post/99999/delete')
+					.set('Cookie', sessionCookie)
+					.expect(400)
+					.expect('Content-Type', /json/)
+					.expect((res) => {
+						expect(res.body).toEqual(
+							expect.objectContaining<ErrorResponse>({
+								success: false,
+								error: expect.objectContaining<Partial<ErrorDetail>>({
+									code: getErrorCode(400),
+									message: expect.any(String),
+								}),
+							}),
+						)
+					})
+			})
+
+			it('invalid post ID format', async () => {
+				return await request(app.getHttpServer())
+					.delete('/admin/post/invalid-id/delete')
+					.set('Cookie', sessionCookie)
+					.expect(400)
+					.expect('Content-Type', /json/)
+					.expect((res) => {
+						expect(res.body).toEqual(
+							expect.objectContaining<ErrorResponse>({
+								success: false,
+								error: expect.objectContaining<Partial<ErrorDetail>>({
+									code: getErrorCode(400),
+									message: expect.any(String),
+								}),
+							}),
+						)
+					})
+			})
+
+			it("editor cannot delete another user's post", async () => {
+				// Create post as admin
+				const createData: CreatePostDTO = {
+					title: faker.lorem.sentence({ min: 8, max: 12 }),
+					description: faker.lorem.sentences({ min: 1, max: 2 }),
+					content: faker.lorem.paragraphs({ min: 2, max: 5 }),
+					published: true,
+					categoryId: 1,
+					seriesId: 1,
+				}
+
+				const {
+					body: createBody,
+				}: { body: SuccessResponse<CreatePostResultDTO> } = await request(
+					app.getHttpServer(),
+				)
+					.post('/admin/post/create')
+					.set('Cookie', sessionCookie) // Admin session
+					.field({
+						...createData,
+					})
+					.expect(201)
+
+				// Try to delete as editor
+				const editorCookie = await getLoginSession(
+					app.getHttpServer(),
+					'editor',
+					'editor',
+				)
+
+				return await request(app.getHttpServer())
+					.delete(`/admin/post/${createBody.data.post.id}/delete`)
+					.set('Cookie', editorCookie)
+					.expect(400)
+					.expect('Content-Type', /json/)
+					.expect((res) => {
+						expect(res.body).toEqual(
+							expect.objectContaining<ErrorResponse>({
+								success: false,
+								error: expect.objectContaining<Partial<ErrorDetail>>({
+									code: getErrorCode(400),
+									message: expect.any(String),
+								}),
+							}),
+						)
+					})
+			})
+		})
+	})
+
+	describe('PATCH /admin/post/:id/update', () => {
+		let sessionCookie: string
+
+		beforeEach(async () => {
+			sessionCookie = await getLoginSession(
+				app.getHttpServer(),
+				username,
+				password,
+			)
+		})
+
+		describe('happy cases', () => {
+			test.each<{
+				updateFields: Partial<UpdatePostDTO>
+				images: ('thumbnail' | 'coverImage')[]
+			}>([
+				{
+					updateFields: {
+						title: faker.lorem.sentence(),
+						description: faker.lorem.paragraph(),
+						content: faker.lorem.paragraphs(),
+						published: false,
+						categoryId: 1,
+						seriesId: 1,
+					},
+					images: ['thumbnail', 'coverImage'],
+				},
+				{
+					updateFields: {
+						title: faker.lorem.sentence(),
+						published: true,
+					},
+					images: ['thumbnail'],
+				},
+				{
+					updateFields: {
+						description: faker.lorem.paragraph(),
+						content: faker.lorem.paragraphs(),
+					},
+					images: ['coverImage'],
+				},
+				{
+					updateFields: {
+						categoryId: 1,
+						seriesId: 1,
+					},
+					images: [],
+				},
+			])(
+				'update post with fields $updateFields and images $images',
+				async ({ updateFields, images }) => {
+					// First create a post
+					const createData: CreatePostDTO = {
+						title: faker.lorem.sentence({ min: 8, max: 12 }),
+						description: faker.lorem.sentences({ min: 1, max: 2 }),
+						content: faker.lorem.paragraphs({ min: 2, max: 5 }),
+						published: true,
+					}
+
+					const {
+						body: createBody,
+					}: { body: SuccessResponse<CreatePostResultDTO> } = await request(
+						app.getHttpServer(),
+					)
+						.post('/admin/post/create')
+						.set('Cookie', sessionCookie)
+						.field({
+							...createData,
+						})
+						.expect(201)
+
+					const imageMock = {
+						fieldname: 'thumbnail',
+						originalname: 'thumbnail.jpg',
+						buffer: Buffer.from(faker.lorem.words()),
+						mimetype: 'image/jpeg',
+					} as Express.Multer.File
+
+					// Then update the created post
+					let req = request(app.getHttpServer())
+						.patch(`/admin/post/${createBody.data.post.id}/update`)
+						.set('Cookie', sessionCookie)
+						.field({ ...updateFields })
+
+					if (images.includes('thumbnail')) {
+						req = req.attach('thumbnail', imageMock.buffer, {
+							filename: imageMock.originalname,
+							contentType: imageMock.mimetype,
+						})
+					}
+					if (images.includes('coverImage')) {
+						req = req.attach('coverImage', imageMock.buffer, {
+							filename: imageMock.originalname,
+							contentType: imageMock.mimetype,
+						})
+					}
+
+					const { body } = await req.expect(200).expect('Content-Type', /json/)
+					const updatedData = omit(updateFields, 'categoryId', 'seriesId')
+
+					expect(body).toEqual(
+						expect.objectContaining<SuccessResponse<UpdatePostResultDTO>>({
+							success: true,
+							data: {
+								updatedPost: expect.objectContaining<Partial<PostEntity>>({
+									id: createBody.data.post.id,
+									...updatedData,
+									thumbnail: images.includes('thumbnail')
+										? expect.any(String)
+										: createBody.data.post.thumbnail,
+									coverImage: images.includes('coverImage')
+										? expect.any(String)
+										: createBody.data.post.coverImage,
+									category: updateFields.categoryId
+										? expect.objectContaining({
+												id: updateFields.categoryId,
+												name: expect.any(String),
+												slug: expect.any(String),
+											})
+										: null,
+									series: updateFields.seriesId
+										? expect.objectContaining({
+												id: updateFields.seriesId,
+												name: expect.any(String),
+												slug: expect.any(String),
+												description: expect.any(String),
+											})
+										: null,
+								}),
+							},
+						}),
+					)
+
+					// Verify the update by fetching the post
+					const { body: fetchedBody } = await request(app.getHttpServer())
+						.get(`/admin/post/${createBody.data.post.id}`)
+						.set('Cookie', sessionCookie)
+						.expect(200)
+
+					expect(fetchedBody.data.post).toEqual(
+						expect.objectContaining(body.data.updatedPost),
+					)
+				},
+			)
+
+			it('editor can update their own post', async () => {
+				// Login as editor
+				const editorCookie = await getLoginSession(
+					app.getHttpServer(),
+					'editor',
+					'editor',
+				)
+
+				// First create a post as editor
+				const createData: CreatePostDTO = {
+					title: faker.lorem.sentence({ min: 8, max: 12 }),
+					description: faker.lorem.sentences({ min: 1, max: 2 }),
+					content: faker.lorem.paragraphs({ min: 2, max: 5 }),
+					published: true,
+				}
+
+				const {
+					body: createBody,
+				}: { body: SuccessResponse<CreatePostResultDTO> } = await request(
+					app.getHttpServer(),
+				)
+					.post('/admin/post/create')
+					.set('Cookie', editorCookie)
+					.field({
+						...createData,
+					})
+					.expect(201)
+
+				// Update the post
+				const updateFields: UpdatePostDTO = {
+					title: faker.lorem.sentence(),
+					description: faker.lorem.paragraph(),
+				}
+
+				const { body } = await request(app.getHttpServer())
+					.patch(`/admin/post/${createBody.data.post.id}/update`)
+					.set('Cookie', editorCookie)
+					.field({ ...updateFields })
+					.expect(200)
+					.expect('Content-Type', /json/)
+
+				expect(body).toEqual(
+					expect.objectContaining<SuccessResponse<UpdatePostResultDTO>>({
+						success: true,
+						data: {
+							updatedPost: expect.objectContaining({
+								id: createBody.data.post.id,
+								...updateFields,
+								author: expect.objectContaining({
+									username: 'editor',
+								}),
+							}),
+						},
+					}),
+				)
+			})
+		})
+
+		describe('bad cases', () => {
+			it('unauthenticated request', async () => {
+				return await request(app.getHttpServer())
+					.patch('/admin/post/1/update')
+					.expect(403)
+					.expect('Content-Type', /json/)
+					.expect((res) => {
+						expect(res.body).toEqual(
+							expect.objectContaining<ErrorResponse>({
+								success: false,
+								error: expect.any(Object),
+							}),
+						)
+					})
+			})
+
+			it('non-existent post ID', async () => {
+				return await request(app.getHttpServer())
+					.patch('/admin/post/99999/update')
+					.set('Cookie', sessionCookie)
+					.field({ title: 'Updated Title' })
+					.expect(400)
+					.expect('Content-Type', /json/)
+					.expect((res) => {
+						expect(res.body).toEqual(
+							expect.objectContaining<ErrorResponse>({
+								success: false,
+								error: expect.objectContaining<Partial<ErrorDetail>>({
+									code: getErrorCode(400),
+									message: expect.any(String),
+								}),
+							}),
+						)
+					})
+			})
+
+			it('invalid post ID format', async () => {
+				return await request(app.getHttpServer())
+					.patch('/admin/post/invalid-id/update')
+					.set('Cookie', sessionCookie)
+					.field({ title: 'Updated Title' })
+					.expect(400)
+					.expect('Content-Type', /json/)
+					.expect((res) => {
+						expect(res.body).toEqual(
+							expect.objectContaining<ErrorResponse>({
+								success: false,
+								error: expect.objectContaining<Partial<ErrorDetail>>({
+									code: getErrorCode(400),
+									message: expect.any(String),
+								}),
+							}),
+						)
+					})
+			})
+
+			it("editor cannot update another user's post", async () => {
+				// Create post as admin
+				const createData: CreatePostDTO = {
+					title: faker.lorem.sentence({ min: 8, max: 12 }),
+					description: faker.lorem.sentences({ min: 1, max: 2 }),
+					content: faker.lorem.paragraphs({ min: 2, max: 5 }),
+					published: true,
+				}
+
+				const {
+					body: createBody,
+				}: { body: SuccessResponse<CreatePostResultDTO> } = await request(
+					app.getHttpServer(),
+				)
+					.post('/admin/post/create')
+					.set('Cookie', sessionCookie) // Admin session
+					.field({
+						...createData,
+					})
+					.expect(201)
+
+				// Try to update as editor
+				const editorCookie = await getLoginSession(
+					app.getHttpServer(),
+					'editor',
+					'editor',
+				)
+
+				return await request(app.getHttpServer())
+					.patch(`/admin/post/${createBody.data.post.id}/update`)
+					.set('Cookie', editorCookie)
+					.field({ title: 'Updated Title' })
+					.expect(400)
+					.expect('Content-Type', /json/)
+					.expect((res) => {
+						expect(res.body).toEqual(
+							expect.objectContaining<ErrorResponse>({
+								success: false,
+								error: expect.objectContaining<Partial<ErrorDetail>>({
+									code: getErrorCode(400),
+									message: expect.any(String),
+								}),
+							}),
+						)
+					})
+			})
+
+			it('invalid update data', async () => {
+				// First create a post
+				const createData: CreatePostDTO = {
+					title: faker.lorem.sentence({ min: 8, max: 12 }),
+					description: faker.lorem.sentences({ min: 1, max: 2 }),
+					content: faker.lorem.paragraphs({ min: 2, max: 5 }),
+					published: true,
+				}
+
+				const {
+					body: createBody,
+				}: { body: SuccessResponse<CreatePostResultDTO> } = await request(
+					app.getHttpServer(),
+				)
+					.post('/admin/post/create')
+					.set('Cookie', sessionCookie)
+					.field({
+						...createData,
+					})
+					.expect(201)
+
+				// Try to update with invalid data
+				return await request(app.getHttpServer())
+					.patch(`/admin/post/${createBody.data.post.id}/update`)
+					.set('Cookie', sessionCookie)
+					.field({ title: '' }) // Empty title should be invalid
+					.expect(400)
+					.expect('Content-Type', /json/)
+					.expect((res) => {
+						expect(res.body).toEqual(
+							expect.objectContaining<ErrorResponse>({
+								success: false,
+								error: expect.objectContaining<Partial<ErrorDetail>>({
+									code: getErrorCode(400),
+									message: expect.any(String),
+									details: expect.any(Array),
+								}),
+							}),
+						)
+					})
+			})
 		})
 	})
 })

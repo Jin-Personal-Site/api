@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client'
-import { Type } from 'class-transformer'
+import { Transform, Type } from 'class-transformer'
 import {
 	IsBoolean,
 	IsNotEmpty,
@@ -21,7 +21,7 @@ export class CreatePostDTO implements Partial<Prisma.PostUncheckedCreateInput> {
 	@IsNotEmpty()
 	content: string
 
-	@Type(() => Boolean)
+	@Transform(({ value }) => !!JSON.parse(value))
 	@IsBoolean()
 	published: boolean
 

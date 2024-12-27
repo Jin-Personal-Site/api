@@ -12,7 +12,7 @@ import {
 	PrismaClientUnknownRequestError,
 	PrismaClientValidationError,
 } from '@prisma/client/runtime/library'
-import { Request, Response } from 'express'
+import { query, Request, Response } from 'express'
 import { ErrorResponse, getErrorCode } from '../types'
 import { getHttpMetadata } from '../helpers'
 
@@ -39,11 +39,22 @@ export class PrismaClientErrorFilter implements ExceptionFilter {
 			meta: getHttpMetadata(request),
 		} as ErrorResponse)
 
-		this.doErrorTask(exception, errorMessagePrefix)
+		this.doErrorTask(request, exception, errorMessagePrefix)
 	}
 
-	private doErrorTask(exception: Error, errorMessagePrefix: string) {
+	private doErrorTask(
+		request: Request,
+		exception: Error,
+		errorMessagePrefix: string,
+	) {
 		let message = errorMessagePrefix
+		message += `\n${JSON.stringify({
+			query: request.query,
+			body:
+				request.body instanceof FormData
+					? Object.fromEntries(request.body.entries())
+					: request.body,
+		})}`
 		if (exception instanceof PrismaClientKnownRequestError) {
 			message += `\nERROR_CODE: ${exception.code}. METADATA: ${JSON.stringify(exception.meta)}`
 		} else if (exception instanceof PrismaClientUnknownRequestError) {

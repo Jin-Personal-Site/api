@@ -4,6 +4,7 @@ import {
 	Controller,
 	Delete,
 	Get,
+	Param,
 	Patch,
 	Post,
 	Query,
@@ -50,36 +51,30 @@ export class CategoryController {
 		return plainToInstance(AllCategoriesOutputDTO, { categories })
 	}
 
-	@Delete('delete')
+	@Delete(':id/delete')
 	@UseGuards(AuthenticatedGuard)
 	@ApiSuccessResponse(200, DeleteCategoryResultDTO)
 	@ApiErrorResponse(400)
 	@ApiErrorResponse(403)
-	async delete(@Query('id', ParsePositivePipe) categoryId: number) {
+	async delete(@Param('id', ParsePositivePipe) categoryId: number) {
 		const deletedCategory =
 			await this.categoryService.deleteCategory(categoryId)
-		if (!deletedCategory) {
-			throw new BadRequestException('Not found category with this ID')
-		}
 		return plainToInstance(DeleteCategoryResultDTO, { deletedCategory })
 	}
 
-	@Patch('update')
+	@Patch(':id/update')
 	@UseGuards(AuthenticatedGuard)
 	@ApiSuccessResponse(200, UpdateCategoryResultDTO)
 	@ApiErrorResponse(400)
 	@ApiErrorResponse(403)
 	async update(
-		@Query('id', ParsePositivePipe) categoryId: number,
+		@Param('id', ParsePositivePipe) categoryId: number,
 		@Body() body: UpdateCategoryDTO,
 	) {
 		const updatedCategory = await this.categoryService.updateCategory(
 			categoryId,
 			body,
 		)
-		if (!updatedCategory) {
-			throw new BadRequestException('Not found category with this ID')
-		}
 		return plainToInstance(UpdateCategoryResultDTO, { updatedCategory })
 	}
 }

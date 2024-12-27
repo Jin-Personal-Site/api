@@ -5,6 +5,7 @@ import {
 	Delete,
 	Get,
 	Inject,
+	Param,
 	Patch,
 	Post,
 	Query,
@@ -19,6 +20,7 @@ import {
 	CreatePostDTO,
 	CreatePostResultDTO,
 	DeletePostResultDTO,
+	PostDetailOutputDTO,
 	UpdatePostDTO,
 	UpdatePostResultDTO,
 } from './dto'
@@ -56,23 +58,20 @@ export class PostController {
 		@User() user: Express.User,
 		@Body() body: CreatePostDTO,
 		@UploadedFiles()
-		{
-			thumbnail,
-			coverImage,
-		}: {
+		images: {
 			thumbnail: Express.Multer.File[]
 			coverImage: Express.Multer.File[]
 		},
 	) {
 		const [thumbnailResult, coverResult] = await Promise.all([
-			thumbnail?.[0] &&
+			images?.thumbnail?.[0] &&
 				this.storageService.putObject({
-					file: thumbnail[0],
+					file: images?.thumbnail[0],
 					prefix: 'images/post/thumbnails/',
 				}),
-			coverImage?.[0] &&
+			images?.coverImage?.[0] &&
 				this.storageService.putObject({
-					file: coverImage[0],
+					file: images?.coverImage[0],
 					prefix: 'images/post/covers/',
 				}),
 		])
@@ -80,8 +79,15 @@ export class PostController {
 		body.thumbnail = thumbnailResult?.objectKey
 		body.coverImage = coverResult?.objectKey
 
-		const post = await this.postService.createPost(user, body)
-		return plainToInstance(CreatePostResultDTO, { post })
+		try {
+			const post = await this.postService.createPost(user, body)
+			return plainToInstance(CreatePostResultDTO, { post })
+		} catch (exception) {
+			await this.storageService.deleteObjects({
+				keys: [body.thumbnail, body.coverImage],
+			})
+			throw exception
+		}
 	}
 
 	@Get('all')
@@ -92,13 +98,22 @@ export class PostController {
 		return plainToInstance(AllPostOutputDTO, postData)
 	}
 
-	@Delete('delete')
+	@Get(':id')
+	@UseGuards(AuthenticatedGuard)
+	@ApiSuccessResponse(200, PostDetailOutputDTO)
+	@ApiErrorResponse(400)
+	async getPostDetail(@Param('id', ParsePositivePipe) postId: number) {
+		const postData = await this.postService.getPostById(postId)
+		return plainToInstance(PostDetailOutputDTO, { post: postData })
+	}
+
+	@Delete(':id/delete')
 	@UseGuards(AuthenticatedGuard)
 	@ApiSuccessResponse(200, DeletePostResultDTO)
 	@ApiErrorResponse(400)
 	async delete(
 		@User() user: Express.User,
-		@Query('id', ParsePositivePipe) postId: number,
+		@Param('id', ParsePositivePipe) postId: number,
 	) {
 		const deletedPost = await this.postService.deletePost(user, postId)
 		if (!deletedPost) {
@@ -107,32 +122,35 @@ export class PostController {
 		return plainToInstance(DeletePostResultDTO, { deletedPost })
 	}
 
-	@Patch('update')
+	@Patch(':id/update')
 	@UseGuards(AuthenticatedGuard)
+	@UseInterceptors(
+		FileFieldsInterceptor([
+			{ name: 'thumbnail', maxCount: 1 },
+			{ name: 'coverImage', maxCount: 1 },
+		]),
+	)
 	@ApiSuccessResponse(200, UpdatePostResultDTO)
 	@ApiErrorResponse(400)
 	async update(
 		@User() user: Express.User,
+		@Param('id', ParsePositivePipe) postId: number,
+		@Body() body: UpdatePostDTO,
 		@UploadedFiles()
-		{
-			thumbnail,
-			coverImage,
-		}: {
+		images: {
 			thumbnail: Express.Multer.File[]
 			coverImage: Express.Multer.File[]
 		},
-		@Query('id', ParsePositivePipe) postId: number,
-		@Body() body: UpdatePostDTO,
 	) {
 		const [thumbnailResult, coverResult] = await Promise.all([
-			thumbnail?.[0] &&
+			images?.thumbnail?.[0] &&
 				this.storageService.putObject({
-					file: thumbnail[0],
+					file: images?.thumbnail[0],
 					prefix: 'images/thumbnails/',
 				}),
-			coverImage?.[0] &&
+			images?.coverImage?.[0] &&
 				this.storageService.putObject({
-					file: coverImage[0],
+					file: images?.coverImage[0],
 					prefix: 'images/covers/',
 				}),
 		])
@@ -140,10 +158,14 @@ export class PostController {
 		body.thumbnail = thumbnailResult?.objectKey
 		body.coverImage = coverResult?.objectKey
 
-		const updatedPost = await this.postService.updatePost(user, postId, body)
-		if (!updatedPost) {
-			throw new BadRequestException('Not found category with this ID')
+		try {
+			const updatedPost = await this.postService.updatePost(user, postId, body)
+			return plainToInstance(UpdatePostResultDTO, { updatedPost })
+		} catch (exception) {
+			await this.storageService.deleteObjects({
+				keys: [body.thumbnail, body.coverImage],
+			})
+			throw exception
 		}
-		return plainToInstance(UpdatePostResultDTO, { updatedPost })
 	}
 }

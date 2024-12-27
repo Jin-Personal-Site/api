@@ -13,6 +13,16 @@ export type PutObjectParam = {
 	useOriginalName?: boolean
 }
 
+export type DeleteObjectParam = {
+	bucketName?: string
+	key: string
+}
+
+export type DeleteObjectsParam = {
+	bucketName?: string
+	keys: string[]
+}
+
 export type PutObjectResult = {
 	objectKey: string
 }
@@ -20,6 +30,8 @@ export type PutObjectResult = {
 export interface IStorage {
 	getObject(options: GetObjectParam)
 	putObject(options: PutObjectParam): PutObjectResult | Promise<PutObjectResult>
+	deleteObject(options: DeleteObjectParam): Promise<void>
+	deleteObjects(options: DeleteObjectsParam): Promise<void>
 }
 
 @Injectable()

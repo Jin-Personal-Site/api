@@ -1,12 +1,16 @@
 import { AppConfigService } from '@/config'
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import {
+	DeleteObjectCommand,
+	DeleteObjectsCommand,
 	GetObjectCommand,
 	PutObjectCommand,
 	S3Client,
 } from '@aws-sdk/client-s3'
 import {
 	BaseStorage,
+	DeleteObjectParam,
+	DeleteObjectsParam,
 	GetObjectParam,
 	IStorage,
 	PutObjectParam,
@@ -66,5 +70,28 @@ export class S3Service extends BaseStorage implements IStorage, OnModuleInit {
 		)
 
 		return { objectKey: fileKey }
+	}
+
+	async deleteObject(options: DeleteObjectParam) {
+		const { key, bucketName } = options
+		await this.s3Client.send(
+			new DeleteObjectCommand({
+				Bucket: bucketName || this.bucketName,
+				Key: key,
+			}),
+		)
+	}
+
+	async deleteObjects(options: DeleteObjectsParam) {
+		const { keys, bucketName } = options
+		const filteredKeys = keys.filter((key) => key)
+		if (!filteredKeys.length) return
+
+		await this.s3Client.send(
+			new DeleteObjectsCommand({
+				Bucket: bucketName || this.bucketName,
+				Delete: { Objects: filteredKeys.map((Key) => ({ Key })) },
+			}),
+		)
 	}
 }
