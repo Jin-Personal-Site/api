@@ -34,8 +34,17 @@ export class MinioService
 		this.bucketName = this.configService.getStorageBucketName()
 	}
 
-	onModuleInit() {
+	async onModuleInit() {
 		Logger.log('Minio storage connected', 'MinioClient')
+		await this.ensureBucketExists(this.bucketName)
+	}
+
+	private async ensureBucketExists(bucketName: string) {
+		const exists = await this.minioClient.bucketExists(bucketName)
+		if (!exists) {
+			await this.minioClient.makeBucket(bucketName, 'us-east-1') // Specify the region as needed
+			Logger.log(`Bucket ${bucketName} created`, 'MinioClient')
+		}
 	}
 
 	async getObject(options: GetObjectParam) {
