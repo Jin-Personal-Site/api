@@ -53,7 +53,7 @@ export const middlewares = (app: INestApplication) => {
 	const appConfigService = app.get(AppConfigService)
 
 	app.use(generateRequestIDMiddleware)
-	app.use(compression())
+	app.use(compression({ threshold: 0 }))
 	app.use(
 		session({
 			store: getRedisStore(appConfigService.getCacheConfig()),
@@ -63,8 +63,11 @@ export const middlewares = (app: INestApplication) => {
 			cookie: {
 				maxAge: 3600000,
 				httpOnly: true,
-				sameSite: 'lax',
-				secure: appConfigService.isProduction(),
+				sameSite: 'none',
+				secure:
+					appConfigService.isHttpsAdmin() || appConfigService.isProduction(),
+				priority: 'high',
+				signed: true,
 			},
 			rolling: true,
 		}),

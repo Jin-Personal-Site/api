@@ -1,0 +1,80 @@
+name: Run Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  unit-and-e2e-testing:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: personal_site_testing
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Update Prisma submodule
+        run: |
+          git submodule update --init --recursive
+          git submodule update --remote
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup minio
+        run: |
+          docker run -d -p 9000:9000 --name minio \
+            -e "MINIO_ACCESS_KEY=minio123" \
+            -e "MINIO_SECRET_KEY=minio123" \
+            -v /tmp/data:/data \
+            -v /tmp/config:/root/.minio \
+            minio/minio server /data
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Copy .env.testing to .env
+        run: cp .env.testing .env
+
+      - name: Setup database
+        run: pnpm db:migrate
+
+      - name: Run Unit Tests
+        run: pnpm test:unit
+
+      - name: Run End-to-End Tests
+        run: pnpm test:e2e
