@@ -23,6 +23,12 @@ export class AppConfigService {
 		)
 	}
 
+	isHttpsAdmin(): boolean {
+		return this.configService
+			.get('adminUrl', { infer: true })
+			?.startsWith('https')
+	}
+
 	isTesting(): boolean {
 		return (
 			this.configService.get('server.nodeEnv', { infer: true }) ===
