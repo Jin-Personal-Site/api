@@ -38,6 +38,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: true
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Update Prisma submodule
+        run: |
+          git submodule update --init --recursive
+          git submodule update --remote
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
