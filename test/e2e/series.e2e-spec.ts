@@ -174,7 +174,7 @@ describe('SeriesController (e2e)', () => {
 				const createData: CreateSeriesDTO = {
 					name: faker.lorem.words(2),
 					slug: faker.helpers.slugify(faker.lorem.words(2)).toLowerCase(),
-					description: faker.lorem.sentences(1),
+					description: faker.lorem.words({ min: 5, max: 10 }),
 				}
 				console.log(createData)
 

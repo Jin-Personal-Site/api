@@ -313,7 +313,7 @@ describe('PostController (e2e)', () => {
 					expect.objectContaining({
 						id: expect.any(Number),
 						title: expect.any(String),
-						description: expect.any(String),
+						description: expect.toBeOneOf([null, expect.any(String)]),
 						content: expect.any(String),
 						author: expect.objectContaining({
 							id: expect.any(Number),

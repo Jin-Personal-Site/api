@@ -49,6 +49,20 @@ const generateRequestIDMiddleware = (
 	next()
 }
 
+const getSessionCookieConfig = (configService: AppConfigService) => {
+	const cookieOptions: session.CookieOptions = {
+		maxAge: 3600000,
+		httpOnly: true,
+		signed: true,
+		priority: 'high',
+	}
+	if (configService.isProduction() || configService.isHttpsAdmin()) {
+		cookieOptions.sameSite = 'none'
+		cookieOptions.secure = true
+	}
+	return cookieOptions
+}
+
 export const middlewares = (app: INestApplication) => {
 	const appConfigService = app.get(AppConfigService)
 
@@ -60,15 +74,7 @@ export const middlewares = (app: INestApplication) => {
 			secret: 'my-session-secret',
 			resave: false,
 			saveUninitialized: false,
-			cookie: {
-				maxAge: 3600000,
-				httpOnly: true,
-				sameSite: 'none',
-				secure:
-					appConfigService.isHttpsAdmin() || appConfigService.isProduction(),
-				priority: 'high',
-				signed: true,
-			},
+			cookie: getSessionCookieConfig(appConfigService),
 			rolling: true,
 		}),
 	)
