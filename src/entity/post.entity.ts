@@ -8,6 +8,7 @@ import { SeriesEntity } from './series.entity'
 export class PostEntity implements Post {
 	id: number
 	title: string
+	slug: string
 	description: string
 	content: string
 	approved: boolean

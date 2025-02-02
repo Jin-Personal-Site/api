@@ -3,6 +3,7 @@ export const envConfig = () =>
 		server: {
 			nodeEnv: process.env.NODE_ENV,
 			port: process.env.PORT || 3000,
+			devPort: process.env.DEV_PORT,
 		},
 		adminUrl: process.env.ADMIN_URL,
 		webUrl: process.env.WEB_URL,

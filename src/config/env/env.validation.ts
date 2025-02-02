@@ -30,6 +30,13 @@ export class EnvironmentVariables {
 	@IsOptional()
 	PORT?: number = 3000
 
+	@Type(() => Number)
+	@IsNumber()
+	@Min(0)
+	@Max(65535)
+	@IsOptional()
+	DEV_PORT?: number
+
 	@IsUrl({
 		require_tld: false,
 	})

@@ -7,6 +7,7 @@ export declare global {
 		interface ProcessEnv {
 			NODE_ENV: Environment
 			PORT: number
+			DEV_PORT: number
 			ADMIN_URL: string
 			WEB_URL: string
 

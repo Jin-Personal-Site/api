@@ -16,6 +16,15 @@ export class AppConfigService {
 		})
 	}
 
+	getAppPort(): number {
+		const port = this.get('server.port')
+		if (this.isProduction()) {
+			return this.get('server.port')
+		}
+		const devPort = this.get('server.devPort')
+		return devPort || port
+	}
+
 	isProduction(): boolean {
 		return (
 			this.configService.get('server.nodeEnv', { infer: true }) ===

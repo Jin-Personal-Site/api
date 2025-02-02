@@ -1,4 +1,10 @@
-import { CacheService, Pagination, PrismaService } from '@/common'
+import {
+	CacheService,
+	counter,
+	getSlug,
+	Pagination,
+	PrismaService,
+} from '@/common'
 import { BadRequestException, Injectable } from '@nestjs/common'
 import {
 	AllPostDTO,
@@ -22,6 +28,19 @@ export class PostService {
 		return await this.cacheService.getSet(getCacheKey.post.total, () =>
 			this.prisma.post.count(),
 		)
+	}
+
+	private async allSlugs(): Promise<string[]> {
+		const posts = await this.cacheService.getSet(
+			getCacheKey.post.allSlugs,
+			() =>
+				this.prisma.post.findMany({
+					select: {
+						slug: true,
+					},
+				}),
+		)
+		return posts.map((post) => post.slug)
 	}
 
 	async createPost(
@@ -52,14 +71,18 @@ export class PostService {
 				throw new BadRequestException('Series does not exist')
 			}
 		}
+
+		const slug = getSlug(await this.allSlugs(), data.title)
 		const createdPost = await this.prisma.post.create({
 			data: {
 				title: data.title,
+				slug,
 				description: data.description,
 				content: data.content,
 				thumbnail: data.thumbnail,
 				coverImage: data.coverImage,
 				published: author.role === Role.ADMIN,
+				approved: author.role === Role.ADMIN,
 				publishedAt: author.role === Role.ADMIN ? new Date() : null,
 				authorId: author.id,
 				categoryId: category?.id,

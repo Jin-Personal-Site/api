@@ -17,5 +17,6 @@ export const getCacheKey = {
 		total: 'post:total',
 		all: (page: number, limit: number) =>
 			`post:all:page_${page}:limit_${limit}`,
+		allSlugs: 'post:all-slug',
 	},
 }

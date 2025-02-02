@@ -1,0 +1,61 @@
+version: '3.8'
+services:
+  api:
+    #
+    container_name: personal_site_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 7070:443 # API server
+      - 7071:543 # API Prod server
+      - 3000:3000 # Optional port
+      - 9229:9229 # Nest debug server
+      - 5555:5555 # Prisma Studio
+    depends_on:
+      - db
+      - redis
+      - minio
+    volumes:
+      - ../api:/usr/src/app
+      - api_node_modules:/usr/src/app/node_modules
+      - api_pnpm_store:/usr/src/app/.pnpm-store
+
+  db:
+    image: postgres:14
+    container_name: personal_site_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: personal_site
+    ports:
+      - 6432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:alpine
+    container_name: personal_site_redis
+    restart: always
+    ports:
+      - 7379:6379
+
+  minio:
+    image: minio/minio:RELEASE.2021-10-10T16-53-30Z
+    container_name: personal_site_minio
+    ports:
+      - 10000:9000
+      - 10001:9001
+    volumes:
+      - ./minio/data:/data
+    environment:
+      - MINIO_ROOT_USER=minio123
+      - MINIO_ROOT_PASSWORD=minio123
+    entrypoint: sh
+    command: -c "/opt/bin/minio server /data --console-address :9001"
+
+volumes:
+  postgres_data:
+  api_node_modules:
+  api_pnpm_store:
