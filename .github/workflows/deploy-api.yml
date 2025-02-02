@@ -1,0 +1,40 @@
+name: Build NestJS API
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install PNPM
+        run: npm install -g pnpm
+
+      - name: Install packages
+        run: pnpm install
+
+      - name: Generate Prisma models
+        run: pnpm db:generate
+
+      - name: Build
+        run: pnpm build
+
+      - name: Create .env file
+        run: |
+          touch .env
+          echo "${{ vars.PROD_ENV_FILE }}" > .env
