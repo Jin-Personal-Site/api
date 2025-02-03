@@ -8,6 +8,7 @@ import { Logger, NestApplicationOptions } from '@nestjs/common'
 const httpsOptions: NestApplicationOptions['httpsOptions'] = ((
 	nodeEnv: Environment,
 ) => {
+	console.log(nodeEnv)
 	if (
 		nodeEnv === Environment.Development &&
 		existsSync('./secrets/key.pem') &&

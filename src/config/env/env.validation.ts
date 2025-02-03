@@ -95,11 +95,13 @@ export class EnvironmentVariables {
 
 	@Type(() => Boolean)
 	@IsBoolean()
-	ESLINT_USE_FLAT_CONFIG: boolean
+	@IsOptional()
+	ESLINT_USE_FLAT_CONFIG: boolean = true
 
 	@Type(() => Boolean)
 	@IsBoolean()
-	FORCE_COLOR: boolean
+	@IsOptional()
+	FORCE_COLOR: boolean = true
 }
 
 export function validateEnv(config: Record<string, unknown>) {
